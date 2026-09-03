@@ -33,37 +33,87 @@ export type OrderStatus =
   | "EXPIRED"
   | "REFUNDED"
 
+// ══════════════════════════════════════════════════════════════ CATÁLOGO ══
+
+export interface ImageRef {
+  url: string
+  alt: string
+}
+
+export interface BrandRef {
+  slug: Slug
+  name: string
+  color: string | null
+  accent: string | null
+  logoUrl: string | null
+}
+
+export interface CategoryRef {
+  slug: Slug
+  name: string
+}
+
 export interface VariantSummary {
   id: Id
   sku: string
   name: string
   priceCents: Cents
   stock: number
+  isDefault: boolean
 }
 
 export interface ProductSummary {
   id: Id
   slug: Slug
   name: string
-  brand: string
-  category: string
+  badge: string | null
+  isFeatured: boolean
+  brand: BrandRef
+  category: CategoryRef
+  image: ImageRef | null
+  /** Precio de la variante por defecto. */
+  priceCents: Cents
+  /** Suma del stock de todas las variantes activas. */
+  stock: number
+}
+
+export interface ProductDetail extends ProductSummary {
+  description: string | null
+  benefits: string | null
+  usageInstructions: string | null
+  images: readonly ImageRef[]
   variants: readonly VariantSummary[]
 }
 
+export type ProductSort = "relevancia" | "precio-asc" | "precio-desc" | "nombre"
+
 export interface ProductQuery {
   readonly search?: string
-  readonly brand?: string
-  readonly category?: string
+  readonly brand?: Slug
+  readonly category?: Slug
+  readonly minPriceCents?: Cents
   readonly maxPriceCents?: Cents
+  readonly onlyFeatured?: boolean
+  readonly sort?: ProductSort
   readonly limit?: number
   readonly offset?: number
 }
 
+export interface ProductPage {
+  readonly items: readonly ProductSummary[]
+  readonly total: number
+}
+
 /** Lectura del catálogo. Implementado por packages/db. */
 export interface ProductRepository {
-  findBySlug(slug: Slug): Promise<ProductSummary | null>
-  search(query: ProductQuery): Promise<readonly ProductSummary[]>
+  findBySlug(slug: Slug): Promise<ProductDetail | null>
+  search(query: ProductQuery): Promise<ProductPage>
+  listFeatured(limit: number): Promise<readonly ProductSummary[]>
+  listBrands(): Promise<readonly BrandRef[]>
+  listCategories(): Promise<readonly CategoryRef[]>
 }
+
+// ════════════════════════════════════════════════════════════ INVENTARIO ══
 
 /**
  * Inventario como libro de movimientos — ADR-0004.
@@ -78,6 +128,8 @@ export interface InventoryService {
   commitSale(orderId: Id): Promise<void>
   record(variantId: Id, delta: number, reason: InventoryReason, note?: string): Promise<void>
 }
+
+// ════════════════════════════════════════════════════════════════ PAGOS ══
 
 export interface PaymentIntent {
   reference: string

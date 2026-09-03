@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google"
+import { SiteFooter, SiteHeader, WhatsAppFloating } from "./components/site-chrome"
 import "./globals.css"
 
 const display = Barlow_Condensed({
@@ -51,7 +52,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-CO" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+        <WhatsAppFloating />
+      </body>
     </html>
   )
 }

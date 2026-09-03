@@ -11,6 +11,8 @@ export default tseslint.config(
       "**/build/**",
       "packages/db/generated/**",
       "packages/db/prisma/migrations/**",
+      // Lo genera Next en cada build y usa referencias triple-slash.
+      "**/next-env.d.ts",
     ],
   },
 

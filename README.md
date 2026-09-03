@@ -96,7 +96,7 @@ sin uso. El razonamiento completo está en
 | Fase | Estado |
 |---|---|
 | F0 · Fundaciones | Completa |
-| F1 · Catálogo | Siguiente |
+| F1 · Catálogo | Código completo. Falta ejecutar la migración contra una base |
 | F2 · Carrito y órdenes | Pendiente |
 | F3 · Pagos Wompi | Pendiente |
 | F4 · Asistente | Pendiente |

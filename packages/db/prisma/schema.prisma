@@ -70,6 +70,11 @@ model Product {
   isActive   Boolean @default(true)
   badge      String?
 
+  /// Nombre, marca, categoría y descripción en minúsculas y sin acentos.
+  /// Permite que "proteina" encuentre "Proteínas" sin recurrir a SQL crudo.
+  /// La búsqueda semántica con pgvector llega en F4, junto al asistente.
+  searchText String @default("")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -80,6 +85,7 @@ model Product {
   @@index([brandId])
   @@index([categoryId])
   @@index([isActive, isFeatured])
+  @@index([searchText])
   @@map("products")
 }
 
