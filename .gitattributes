@@ -1,0 +1,28 @@
+# Normaliza los finales de línea a LF en el repositorio.
+# Se desarrolla en Windows y la CI corre en Linux: sin esto, los scripts de
+# shell y los archivos del contenedor llegan con CRLF y fallan.
+* text=auto eol=lf
+
+# Archivos que deben conservar LF sí o sí.
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.sql         text eol=lf
+*.prisma      text eol=lf
+
+# Binarios: git no debe tocarlos.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.webp   binary
+*.avif   binary
+*.ico    binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+
+# El lockfile se pliega en la vista de GitHub, pero su diff sigue siendo
+# legible: hace falta para revisar cambios de dependencias.
+pnpm-lock.yaml linguist-generated=true

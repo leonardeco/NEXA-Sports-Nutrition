@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Prisma exige una URL para generar el cliente; no se conecta a nada.
+  DATABASE_URL: "postgresql://nexa:nexa@localhost:5432/nexa?schema=public"
+  DIRECT_URL: "postgresql://nexa:nexa@localhost:5432/nexa?schema=public"
+
+jobs:
+  verify:
+    name: Lint · Typecheck · Tests · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Generar cliente de Prisma
+        run: pnpm db:generate
+
+      # Aquí es donde se verifica la constitución, principio 2: si
+      # packages/core importa Next, Prisma o React, este paso falla.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  docker:
+    name: Imagen Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ADR-0006: los manifiestos de K8s no se operan, pero la imagen se
+      # construye en cada PR para que la portabilidad no envejezca sin uso.
+      - name: Construir imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

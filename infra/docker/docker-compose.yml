@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────
+#  Entorno de desarrollo local — ADR-0006
+#  Este SÍ es el entorno que se usa a diario. Los manifiestos de K8s en
+#  infra/k8s son portabilidad, no producción.
+#
+#  Arrancar:  pnpm docker:up
+#  Parar:     pnpm docker:down
+#  Borrar:    pnpm docker:reset   (destruye el volumen de datos)
+# ─────────────────────────────────────────────────────────────────────────
+
+name: nexa
+
+services:
+  postgres:
+    # Imagen oficial de pgvector sobre PostgreSQL 17: trae la extensión
+    # compilada, así no hay que construir nada.
+    image: pgvector/pgvector:pg17
+    container_name: nexa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexa
+      POSTGRES_PASSWORD: nexa
+      POSTGRES_DB: nexa
+      # Colación es-CO para que el orden alfabético de marcas y productos
+      # trate bien los acentos.
+      LANG: es_CO.utf8
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexa-pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexa -d nexa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:5
+    container_name: nexa-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: dracula
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  nexa-pgdata:
+    name: nexa-pgdata

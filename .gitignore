@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Build
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Prisma
+packages/db/generated/
+
+# Entorno — nunca commitear secretos (constitución, principio 7)
+.env
+.env.*
+!.env.example
+
+# Herramientas
+.vercel/
+.turbo/
+coverage/
+.codegraph/
+playwright-report/
+test-results/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*

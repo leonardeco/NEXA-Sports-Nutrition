@@ -1,0 +1,85 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Tokens NEXA — ADS §8
+
+   Regla de uso del naranja: es un acento, no un fondo. Si en una pantalla
+   hay más de tres elementos naranjas, deja de leerse como llamada a la
+   acción. Negro y blanco cargan la estructura; el naranja marca dónde hacer
+   clic, igual que la flecha del logotipo atraviesa una palabra negra.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Marca ── */
+  --color-nexa-ink: #0a0a0a;
+  --color-nexa-navy: #0f1b33;
+  --color-nexa-navy-deep: #060c1a;
+  --color-nexa-paper: #ffffff;
+  --color-nexa-orange: #ff5a1f;
+  --color-nexa-orange-hover: #e64a10;
+  --color-nexa-orange-soft: #fff0e9;
+
+  /* Verde exclusivo del botón de WhatsApp. No usarlo para nada más. */
+  --color-nexa-whatsapp: #25d366;
+  --color-nexa-whatsapp-hover: #1ea352;
+
+  /* ── Neutros, con sesgo hacia el navy del isotipo ── */
+  --color-nexa-50: #fbfaf8;
+  --color-nexa-100: #f3f2ef;
+  --color-nexa-200: #e3e1dc;
+  --color-nexa-300: #cfccc5;
+  --color-nexa-400: #9aa0ad;
+  --color-nexa-500: #6b7280;
+  --color-nexa-600: #4b5262;
+  --color-nexa-700: #3c4250;
+  --color-nexa-800: #1e2735;
+  --color-nexa-900: #14161c;
+
+  /* ── Semánticos ── */
+  --color-nexa-success: #2e6b4f;
+  --color-nexa-warning: #8a5a00;
+  --color-nexa-danger: #b3261e;
+
+  /* ── Tipografía ──
+     Barlow Condensed para titulares: condensada e itálica, en la línea del
+     logotipo. IBM Plex Sans para texto — se descarta Inter por genérica.
+     Las variables --font-nexa-* las inyecta next/font desde el layout; el
+     nombre literal queda como respaldo si la fuente no carga. */
+  --font-display: var(--font-nexa-display, "Barlow Condensed"), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-nexa-sans, "IBM Plex Sans"), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-nexa-mono, "IBM Plex Mono"), ui-monospace, monospace;
+}
+
+/* ── Superficies: un solo juego de variables para claro y oscuro ── */
+:root {
+  --surface-ground: var(--color-nexa-50);
+  --surface-raised: var(--color-nexa-paper);
+  --surface-sunken: var(--color-nexa-100);
+  --text-primary: var(--color-nexa-900);
+  --text-secondary: var(--color-nexa-700);
+  --text-muted: var(--color-nexa-500);
+  --border-subtle: var(--color-nexa-200);
+  --border-strong: var(--color-nexa-300);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-ground: #0a0d14;
+    --surface-raised: #111722;
+    --surface-sunken: #182031;
+    --text-primary: #eceff5;
+    --text-secondary: #b9c1d0;
+    --text-muted: #838ca0;
+    --border-subtle: #1e2735;
+    --border-strong: #2c3849;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface-ground: #0a0d14;
+  --surface-raised: #111722;
+  --surface-sunken: #182031;
+  --text-primary: #eceff5;
+  --text-secondary: #b9c1d0;
+  --text-muted: #838ca0;
+  --border-subtle: #1e2735;
+  --border-strong: #2c3849;
+}

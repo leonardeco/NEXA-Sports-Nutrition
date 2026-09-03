@@ -1,0 +1,357 @@
+// ─────────────────────────────────────────────────────────────────────────
+//  NEXA Sports Nutrition — esquema de datos
+//  Diseñado en docs/ads/ADS-NEXA-v1.md §6.3 · decisiones en docs/hydraia/adr/
+//
+//  Convención de dinero (ADR-0007): todo importe es un entero de CENTAVOS y
+//  lleva el sufijo `Cents`. Se usa `Int`, no `BigInt`, para que el valor
+//  viaje como `number` en TypeScript y en JSON sin conversiones. El techo es
+//  2.147.483.647 centavos ≈ 21.474.836 COP por campo, muy por encima de
+//  cualquier pedido de suplementos previsto.
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/client"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector, pg_trgm, unaccent]
+}
+
+// ══════════════════════════════════════════════════════════════ CATÁLOGO ══
+
+model Brand {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  color     String?
+  accent    String?
+  logoUrl   String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("brands")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  color     String?
+  accent    String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                String  @id @default(cuid())
+  slug              String  @unique
+  /// id numérico en productos.json del proyecto LEOFIT — trazabilidad de la migración
+  legacyId          Int?    @unique
+  name              String
+  description       String?
+  benefits          String?
+  usageInstructions String?
+
+  brandId    String
+  categoryId String
+  brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  isFeatured Boolean @default(false)
+  isActive   Boolean @default(true)
+  badge      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants   ProductVariant[]
+  images     ProductImage[]
+  embedding  ProductEmbedding?
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([isActive, isFeatured])
+  @@map("products")
+}
+
+/// Existe desde el día 1 aunque solo haya una variante `Única`.
+/// Elimina la invención de sabores en el front del proyecto anterior (deuda D2).
+model ProductVariant {
+  id        String @id @default(cuid())
+  productId String
+  sku       String @unique
+  name      String @default("Única")
+
+  priceCents          Int
+  compareAtPriceCents Int?
+
+  /// Caché de SUM(delta) sobre inventory_movements. La verdad está en el
+  /// libro de movimientos, no aquí (ADR-0004).
+  stock Int @default(0)
+
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product    Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  movements  InventoryMovement[]
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  width     Int?
+  height    Int?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+/// Embeddings para la búsqueda semántica del asistente (ADR-0005).
+/// Prisma no tipa `vector`: se consulta con SQL crudo desde packages/db.
+model ProductEmbedding {
+  productId String                     @id
+  embedding Unsupported("vector(1024)")?
+  updatedAt DateTime                   @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_embeddings")
+}
+
+// ═════════════════════════════════════════════════════════════ INVENTARIO ══
+
+enum InventoryReason {
+  RESTOCK
+  SALE
+  RESERVATION
+  RESERVATION_RELEASE
+  ADJUSTMENT
+  RETURN
+}
+
+/// Libro de movimientos append-only (ADR-0004).
+/// El stock disponible es SUM(delta); cada faltante es explicable.
+model InventoryMovement {
+  id        String          @id @default(cuid())
+  variantId String
+  delta     Int
+  reason    InventoryReason
+  orderId   String?
+  /// Solo para RESERVATION: cuándo se libera si no se paga.
+  expiresAt DateTime?
+  note      String?
+  createdAt DateTime        @default(now())
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  order   Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([variantId, createdAt])
+  @@index([orderId])
+  @@index([reason, expiresAt])
+  @@map("inventory_movements")
+}
+
+// ═════════════════════════════════════════════════════════════════ VENTAS ══
+
+model Customer {
+  id        String   @id @default(cuid())
+  email     String?
+  phone     String?
+  fullName  String?
+  createdAt DateTime @default(now())
+
+  orders Order[]
+
+  @@index([email])
+  @@index([phone])
+  @@map("customers")
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  PAYMENT_FAILED
+  EXPIRED
+  REFUNDED
+}
+
+enum OrderChannel {
+  WEB
+  BOT
+  WHATSAPP
+}
+
+model Order {
+  id          String       @id @default(cuid())
+  /// Referencia única enviada a Wompi y mostrada al cliente.
+  orderNumber String       @unique
+  customerId  String?
+  status      OrderStatus  @default(DRAFT)
+  channel     OrderChannel @default(WEB)
+
+  subtotalCents Int    @default(0)
+  shippingCents Int    @default(0)
+  discountCents Int    @default(0)
+  totalCents    Int    @default(0)
+  currency      String @default("COP")
+
+  shippingCity    String?
+  shippingAddress String?
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  paidAt    DateTime?
+
+  customer  Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  payments  Payment[]
+  movements InventoryMovement[]
+  sessions  ChatSession[]
+
+  @@index([status, createdAt])
+  @@index([customerId])
+  @@map("orders")
+}
+
+/// Snapshots inmutables: si mañana sube el precio, las órdenes viejas siguen
+/// contando lo que el cliente realmente pagó.
+model OrderItem {
+  id                  String @id @default(cuid())
+  orderId             String
+  variantId           String
+  productNameSnapshot String
+  variantNameSnapshot String
+  unitPriceCents      Int
+  quantity            Int
+  lineTotalCents      Int
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  orderId               String
+  provider              String   @default("WOMPI")
+  providerTransactionId String   @unique
+  status                String
+  method                String?
+  amountCents           Int
+  rawPayload            Json?
+  createdAt             DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+/// Idempotencia de webhooks (ADR-0003): `eventId` único. Si Wompi reintenta,
+/// el INSERT falla y no se duplican efectos.
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    @default("WOMPI")
+  eventId     String    @unique
+  signature   String?
+  payload     Json
+  status      String    @default("RECEIVED")
+  error       String?
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([provider, status])
+  @@map("webhook_events")
+}
+
+// ══════════════════════════════════════════════════════════════ ASISTENTE ══
+
+model ChatSession {
+  id               String    @id @default(cuid())
+  anonId           String
+  orderId          String?
+  messageCount     Int       @default(0)
+  tokenBudgetUsed  Int       @default(0)
+  escalatedToHuman Boolean   @default(false)
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+
+  order    Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+
+  @@index([anonId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  /// Auditoría de ADR-0005: aquí se comprueba que ningún precio salió de la
+  /// memoria del modelo en lugar de una consulta a la base.
+  toolCalls Json?
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
+// ══════════════════════════════════════════════════════════════ OPERACIÓN ══
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         String    @default("ADMIN")
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  diff      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
