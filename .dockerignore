@@ -1,0 +1,32 @@
+# Sin esto, `COPY . .` mete los node_modules de la máquina de desarrollo
+# dentro de la imagen: binarios de Windows en un contenedor Linux.
+node_modules
+**/node_modules
+.pnpm-store
+
+# Artefactos de build: la imagen los genera dentro.
+.next
+**/.next
+dist
+**/dist
+**/*.tsbuildinfo
+packages/db/generated
+
+# Nunca dentro de la imagen.
+.env
+.env.*
+!.env.example
+
+# No aportan nada al build.
+.git
+.github
+.vscode
+.idea
+.codegraph
+docs
+infra/k8s
+coverage
+test-results
+playwright-report
+*.log
+*.md
