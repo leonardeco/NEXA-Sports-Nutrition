@@ -222,6 +222,20 @@ model Order {
   status      OrderStatus  @default(DRAFT)
   channel     OrderChannel @default(WEB)
 
+  /// Sesión anónima que originó la orden. Se conserva siempre, también
+  /// después del checkout, para poder mostrarle su pedido a quien no dejó
+  /// correo. Es opaco y viaja en una cookie httpOnly: nunca se expone el id
+  /// de la orden al cliente.
+  sessionId String?
+
+  /// Igual a `sessionId` mientras la orden ES el carrito de esa sesión, y
+  /// null en cuanto se hace checkout. El índice único garantiza un solo
+  /// carrito abierto por sesión, de modo que un doble clic en "añadir" no
+  /// pueda crear dos. Es una columna aparte porque Prisma no sabe declarar
+  /// índices únicos parciales; la condición se codifica en el dato, y los
+  /// NULL no colisionan entre sí en PostgreSQL.
+  draftSessionId String? @unique
+
   subtotalCents Int    @default(0)
   shippingCents Int    @default(0)
   discountCents Int    @default(0)
@@ -244,6 +258,7 @@ model Order {
 
   @@index([status, createdAt])
   @@index([customerId])
+  @@index([sessionId, status])
   @@map("orders")
 }
 

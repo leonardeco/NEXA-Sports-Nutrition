@@ -1,13 +1,50 @@
 export { Money, MoneyError } from "./money"
 export type { Cents } from "./money"
+export {
+  CartError,
+  buildCart,
+  resolveQuantity,
+  shippingFor,
+  toCartLine,
+} from "./cart"
+export type {
+  BuildCartInput,
+  Cart,
+  CartLine,
+  CartLineDraft,
+  QuantityResolution,
+  ShippingPolicy,
+} from "./cart"
+export {
+  ORDER_NUMBER_ENTROPY_BYTES,
+  OrderError,
+  RESERVATION_TTL_MINUTES,
+  assertTransition,
+  buildOrderNumber,
+  canTransition,
+  holdsStock,
+  isReservationExpired,
+  isTerminal,
+  nextStatuses,
+  reservationExpiresAt,
+} from "./order"
 export type {
   BrandRef,
+  CartMutation,
+  CartRepository,
   CategoryRef,
+  CheckoutInput,
   Id,
   ImageRef,
   InventoryReason,
   InventoryService,
+  OrderDetail,
+  OrderLine,
+  OrderPage,
+  OrderQuery,
+  OrderRepository,
   OrderStatus,
+  OrderSummary,
   PaymentGateway,
   PaymentIntent,
   PaymentStatus,

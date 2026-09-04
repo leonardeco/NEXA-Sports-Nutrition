@@ -14,6 +14,7 @@
     "typecheck": "pnpm -r --parallel typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "dotenv -e .env -- vitest run --config vitest.integration.config.ts",
     "db:generate": "pnpm --filter @nexa/db generate",
     "db:migrate": "pnpm --filter @nexa/db migrate",
     "db:push": "pnpm --filter @nexa/db push",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.17.0",
     "globals": "^15.14.0",
     "typescript": "^5.7.2",
