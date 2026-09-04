@@ -32,21 +32,56 @@ docs/              Constitución, ADS y decisiones de arquitectura
 
 ## Puesta en marcha
 
-Requisitos: Node 20.11 o superior, pnpm 10, Docker Desktop.
+Requisitos: Node 20.11 o superior y pnpm 10.
 
 ```bash
 pnpm install
 cp .env.example .env
-pnpm docker:up
-pnpm db:generate
-pnpm db:migrate
+```
+
+Rellena al menos `DATABASE_URL` y `DIRECT_URL` en el `.env`. Hay dos caminos:
+
+**Neon** (es lo que se usa). Crea un proyecto y copia las dos cadenas: la de *pooled
+connection* va en `DATABASE_URL` y la *direct* en `DIRECT_URL`.
+
+**Docker**, si prefieres una base local:
+
+```bash
+pnpm docker:up   # PostgreSQL en :5432 y Adminer en :8080
+```
+
+Luego, en cualquiera de los dos casos:
+
+```bash
+pnpm db:migrate                                    # aplica el esquema
+pnpm db:seed                                       # carga los 127 productos
+pnpm db:admin correo@ejemplo.com "una contraseña"  # crea el acceso al panel
 pnpm dev
 ```
 
-La aplicación queda en `http://localhost:3000` y Adminer en `http://localhost:8080`
-(servidor `postgres`, usuario `nexa`, contraseña `nexa`).
+La aplicación queda en `http://localhost:3000` y el panel en `/acceso`.
 
-Sin Docker, la aplicación también arranca apuntando `DATABASE_URL` a una base de Neon.
+El seed es idempotente y aborta si no salen 127 productos, 127 variantes y el stock total
+exacto: prefiere no cargar nada a cargar el catálogo a medias.
+
+> **El `.env` vive solo en la raíz del monorepo.** Prisma lo carga con `dotenv -e ../../.env`
+> en los scripts de `@nexa/db`, y Next desde `apps/web/next.config.ts`. Si aparece
+> `Environment variable not found: DATABASE_URL`, es que algo se saltó ese puente.
+
+## Variables de entorno
+
+Todas están en [`.env.example`](.env.example) con su explicación. Las que hay que conocer:
+
+| Variable | Para qué |
+|---|---|
+| `DATABASE_URL` · `DIRECT_URL` | Conexión con y sin pooling |
+| `NEXA_SHIPPING_FLAT_CENTS` | Tarifa plana de envío nacional, en centavos. `1200000` = $12.000 |
+| `ADMIN_SESSION_SECRET` | Firma la sesión del panel. Mínimo 32 caracteres, o el panel queda inaccesible a propósito |
+| `CRON_SECRET` | Autoriza el job que libera reservas vencidas |
+| `WOMPI_*` | Las cuatro claves de la pasarela. Sin ellas el botón de pago no se renderiza y la tienda sigue funcionando con WhatsApp |
+| `ANTHROPIC_API_KEY` | Asistente de ventas (F4) |
+
+Ninguna se commitea: `.env` está en `.gitignore` y solo viaja `.env.example` con las claves vacías.
 
 ## Comandos
 
@@ -56,11 +91,37 @@ Sin Docker, la aplicación también arranca apuntando `DATABASE_URL` a una base 
 | `pnpm build` | Build de producción |
 | `pnpm lint` | ESLint, incluida la frontera del dominio |
 | `pnpm typecheck` | TypeScript en los cuatro paquetes |
-| `pnpm test` | Tests unitarios |
+| `pnpm test` | Tests unitarios. No necesitan base de datos |
+| `pnpm test:integration` | Tests contra PostgreSQL real. Mueven stock y lo dejan como estaba |
 | `pnpm db:migrate` | Aplica migraciones en desarrollo |
+| `pnpm db:seed` | Carga el catálogo |
+| `pnpm db:admin <correo> <contraseña>` | Crea o actualiza un administrador |
 | `pnpm db:studio` | Explorador de datos de Prisma |
-| `pnpm docker:up` / `docker:down` | Levanta o para PostgreSQL |
+| `pnpm docker:up` / `docker:down` | Levanta o para PostgreSQL local |
 | `pnpm docker:reset` | Destruye el volumen de datos |
+
+## Cómo se cobra
+
+El flujo completo está en [ADR-0003](docs/hydraia/adr/0003-wompi-webhook-idempotente.md).
+Tres reglas que explican por qué el código es como es:
+
+**El redirect del navegador no confirma nada.** Wompi devuelve al cliente con un `?id=` que
+es manipulable, así que se usa como identificador y jamás como estado: con ese id se le
+pregunta a Wompi, con nuestras credenciales, cuál fue el resultado real. Quien confía en el
+parámetro acaba con órdenes marcadas como pagadas sin cobro detrás.
+
+**El importe manda sobre la firma.** Wompi firma el id, el estado y el importe de la
+transacción, pero **no la referencia**. Un evento legítimo se puede reapuntar a otra orden
+sin romper el checksum, así que antes de aplicar nada se comprueba que el importe coincida
+con el total de la orden. El porqué completo está en
+[ADR-0009](docs/hydraia/adr/0009-el-importe-manda-sobre-la-firma.md).
+
+**Nada queda pagado sin stock descontado.** El cambio de estado, los movimientos de
+inventario y el registro del pago se escriben en un solo `COMMIT`. Y si el webhook nunca
+llega —Wompi solo reintenta tres veces en 24 horas— un job de reconciliación le pregunta a
+la pasarela antes de dar la orden por perdida.
+
+El webhook se configura en el dashboard de Wompi apuntando a `/api/webhooks/wompi`.
 
 ## Reglas del proyecto
 
@@ -74,7 +135,9 @@ reescribir lógica de negocio.
 
 **El servidor es la única fuente de verdad del dinero y del stock.** Los totales se
 recalculan siempre desde la base de datos; ningún importe enviado por el cliente se usa
-para cobrar. Todo movimiento de inventario queda registrado.
+para cobrar. El inventario no es un contador que se suma y se resta, sino un libro de
+movimientos donde cada faltante es explicable
+([ADR-0004](docs/hydraia/adr/0004-inventario-como-libro-de-movimientos.md)).
 
 ## Sobre Kubernetes
 
@@ -89,19 +152,27 @@ sin uso. El razonamiento completo está en
 
 - [Constitución](docs/constitution.md) — reglas permanentes
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
-- [Decisiones de arquitectura](docs/hydraia/adr/) — ADR-0001 a ADR-0007
+- [Decisiones de arquitectura](docs/hydraia/adr/) — ADR-0001 a ADR-0009
 
 ## Estado
 
 | Fase | Estado |
 |---|---|
 | F0 · Fundaciones | Completa |
-| F1 · Catálogo | Código completo. Falta ejecutar la migración contra una base |
-| F2 · Carrito y órdenes | Pendiente |
-| F3 · Pagos Wompi | Pendiente |
+| F1 · Catálogo | Completa. 127 productos migrados y servidos desde PostgreSQL |
+| F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola |
+| F3 · Pagos Wompi | Código completo y probado con eventos firmados. Falta un pago real en el sandbox de Wompi, que ADR-0003 exige antes de producción |
 | F4 · Asistente | Pendiente |
 | F5 · Endurecimiento | Pendiente |
 | F6 · Portabilidad | Pendiente |
+
+Verificación actual: 118 tests unitarios, 31 de integración contra PostgreSQL, 18 rutas.
+
+**Desviación conocida:** el proyecto de Neon corre PostgreSQL 16.15, no 17 como exige el
+principio 1 de la constitución. Neon no actualiza la versión mayor en sitio, así que la
+migración implica crear un proyecto nuevo y resembrar. Está planificada, y conviene hacerla
+antes de que entre el primer pedido real: hasta entonces el catálogo se resiembra en un
+comando y no hay nada que perder.
 
 ## Licencia
 
