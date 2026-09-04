@@ -277,10 +277,11 @@ inventory_movements (id, variant_id FK, delta INT, reason ENUM, order_id FK NULL
 -- Ventas
 customers           (id, email, phone, full_name, created_at)
 orders              (id, order_number UK, customer_id FK NULL, status ENUM,
-                     channel ENUM, subtotal_cents, shipping_cents,
+                     channel ENUM, session_id NULL, draft_session_id UK NULL,
+                     subtotal_cents, shipping_cents,
                      discount_cents, total_cents, currency='COP',
                      shipping_city, shipping_address, notes,
-                     created_at, updated_at)
+                     created_at, updated_at, paid_at NULL)
    status  ∈ { DRAFT, PENDING_PAYMENT, PAID, PREPARING, SHIPPED, DELIVERED,
                CANCELLED, PAYMENT_FAILED, EXPIRED, REFUNDED }
    channel ∈ { WEB, BOT, WHATSAPP }
@@ -305,7 +306,15 @@ audit_log           (id, actor_id, action, entity, entity_id, diff JSONB, create
 Decisiones del modelo, con su porqué:
 
 - **`order_items` guarda snapshots** de nombre y precio. Si mañana sube el precio de la
-  proteína, las órdenes viejas siguen contando lo que el cliente realmente pagó.
+  proteína, las órdenes viejas siguen contando lo que el cliente realmente pagó. Mientras
+  la orden está en `DRAFT` —o sea, mientras es un carrito— esos snapshots no mandan: lo
+  que se muestra y se suma sale de la variante viva. Se congelan en el checkout
+  (ADR-0008).
+- **El carrito es una orden en `DRAFT`**, por eso no hay tabla `carts`. `session_id` es la
+  sesión anónima que la originó y se conserva siempre; `draft_session_id` vale lo mismo
+  mientras la orden ES el carrito de esa sesión y pasa a `NULL` en el checkout. Su índice
+  único es lo que garantiza un solo carrito abierto por sesión — un índice único parcial
+  que Prisma no sabe declarar, codificado en el dato.
 - **El stock no es una columna que se suma y se resta a mano.** El stock disponible es
   `SUM(delta)` sobre `inventory_movements`, cacheado en `product_variants.stock`. Cada
   cambio deja rastro de quién, cuándo y por qué. Esto mata la deuda D1 de raíz.
@@ -330,10 +339,18 @@ Decisiones del modelo, con su porqué:
 | `PATCH` | `/api/cart/items/[id]` | Cambiar cantidad | sesión |
 | `DELETE` | `/api/cart/items/[id]` | Quitar ítem | sesión |
 | `POST` | `/api/checkout` | Crear orden, reservar stock, devolver firma Wompi | sesión |
-| `GET` | `/api/orders/[orderNumber]` | Estado de la orden | token de orden |
+| `GET` | `/api/orders/[orderNumber]` | Estado de la orden | sesión dueña |
 | `POST` | `/api/webhooks/wompi` | Recibir eventos de transacción | firma HMAC |
+| `GET`·`POST` | `/api/cron/expire-orders` | Reconciliar y expirar reservas vencidas | secreto de cron |
+| `POST`·`DELETE` | `/api/admin/session` | Entrar y salir del panel | credenciales |
+| `PATCH` | `/api/admin/orders/[orderNumber]/status` | Transición manual de una orden | admin |
 | `POST` | `/api/chat` | Turno del asistente (streaming SSE) | sesión + rate limit |
 | `POST` | `/api/admin/products` | CRUD de catálogo | admin |
+
+La firma de integridad de Wompi la calcula el servidor y viaja al navegador dentro del
+formulario de pago; la clave privada y los tres secretos nunca salen del servidor. El
+acceso a una orden va acotado a la sesión que la creó: el número de orden se dicta por
+WhatsApp y por teléfono, así que por sí solo no puede abrir el pedido de nadie.
 
 Todo cuerpo de petición y respuesta se define con esquemas Zod compartidos en
 `packages/core/src/contracts`, de forma que cliente y servidor no puedan divergir.
@@ -498,6 +515,11 @@ razón principal para elegir Neon por encima de un Postgres gestionado convencio
 
 Cada fase cierra con revisión de código y con la constitución como lista de verificación.
 
+**Avance al 4 de septiembre de 2026:** F0, F1 y F2 completas y verificadas contra
+PostgreSQL. F3 con el código completo y probado con eventos firmados de extremo a extremo,
+a falta del pago real en el sandbox de Wompi que exige ADR-0003 antes de producción.
+Verificación actual: 118 tests unitarios y 31 de integración.
+
 ---
 
 ## 11. Riesgos
@@ -527,6 +549,8 @@ Cada fase cierra con revisión de código y con la constitución como lista de v
 | [0005](../hydraia/adr/0005-bot-con-herramientas-de-dominio.md) | Bot con uso de herramientas sobre la base de datos, no RAG documental |
 | [0006](../hydraia/adr/0006-kubernetes-como-portabilidad.md) | Kubernetes como portabilidad, no como producción |
 | [0007](../hydraia/adr/0007-dinero-en-centavos.md) | Dinero almacenado en centavos enteros |
+| [0008](../hydraia/adr/0008-carrito-como-orden-en-borrador.md) | El carrito es una orden en `DRAFT`; no existe tabla `carts` |
+| [0009](../hydraia/adr/0009-el-importe-manda-sobre-la-firma.md) | El importe del evento se valida contra el total: Wompi no firma `reference` |
 
 ---
 
