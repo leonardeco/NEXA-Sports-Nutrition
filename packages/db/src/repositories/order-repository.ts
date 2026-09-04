@@ -352,19 +352,28 @@ export class PrismaOrderRepository implements OrderRepository {
         status: "PENDING_PAYMENT",
         movements: { some: { reason: "RESERVATION", expiresAt: { lte: now } } },
       },
-      select: { id: true, orderNumber: true },
+      select: {
+        id: true,
+        orderNumber: true,
+        // Los ids que ya conocemos de esa orden: los deja el webhook, y
+        // también el redirect al volver de la pasarela.
+        payments: { select: { providerTransactionId: true } },
+      },
     })
 
     let expired = 0
     let reconciled = 0
 
-    for (const { id, orderNumber } of stale) {
+    for (const { id, orderNumber, payments } of stale) {
       // RF-15 · preguntar antes de dar por perdido. Si la pasarela dice que
       // se cobró, la orden se resuelve y no se expira: expirarla habría
       // dejado al cliente pagado y sin pedido.
       if (reconcile) {
         try {
-          const payment = await reconcile(orderNumber)
+          const payment = await reconcile({
+            orderNumber,
+            transactionIds: payments.map((p) => p.providerTransactionId),
+          })
           if (payment && orderStatusForTransaction(payment.status) !== null) {
             await this.applyPayment(orderNumber, payment)
             reconciled += 1

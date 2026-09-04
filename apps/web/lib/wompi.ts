@@ -120,31 +120,56 @@ export class WompiGateway implements PaymentGateway {
   }
 
   /**
-   * RF-15 · el estado real de una orden cuyo webhook nunca llegó. Se busca
-   * por referencia y no por id de transacción, porque justamente en ese caso
-   * el id es lo que no tenemos.
+   * RF-15 · el estado real de una transacción, preguntándoselo a Wompi.
+   *
+   * `GET /v1/transactions/{id}` es el único endpoint de consulta que la
+   * documentación garantiza. Buscar por `reference` parece existir, pero no
+   * está documentado para recaudo, y la reconciliación es justo lo que no
+   * puede depender de un endpoint no documentado: si Wompi lo cambia, se
+   * rompe en silencio el mecanismo que evita cobrar sin entregar.
+   *
+   * El id lo conocemos por dos vías: el webhook, y el `?id=` que Wompi añade
+   * al redirect. Que venga del navegador no lo vuelve peligroso — no es un
+   * estado, es un identificador, y el estado se lo preguntamos nosotros a
+   * Wompi con nuestras credenciales.
+   *
+   * La consulta va con la clave pública, que es lo que la documentación
+   * indica para verificar el estado de una transacción.
    */
-  async fetchByReference(reference: string): Promise<PaymentStatus | null> {
-    const url = `${this.config.apiUrl}/transactions?reference=${encodeURIComponent(reference)}`
+  async fetchById(transactionId: string): Promise<PaymentStatus | null> {
+    const url = `${this.config.apiUrl}/transactions/${encodeURIComponent(transactionId)}`
     const response = await fetch(url, {
-      headers: { authorization: `Bearer ${this.config.privateKey}` },
+      headers: { authorization: `Bearer ${this.config.publicKey}` },
       cache: "no-store",
     })
+
+    if (response.status === 404) return null
     if (!response.ok) {
-      throw new Error(`Wompi respondió ${response.status} al consultar ${reference}`)
+      throw new Error(`Wompi respondió ${response.status} al consultar ${transactionId}`)
     }
 
     const body: unknown = await response.json()
-    const rows = (body as { data?: unknown }).data
-    if (!Array.isArray(rows) || rows.length === 0) return null
+    const parsed = wompiTransactionSchema.safeParse((body as { data?: unknown }).data)
+    return parsed.success ? toPaymentStatus(parsed.data) : null
+  }
 
-    // Si hubo varios intentos sobre la misma referencia, manda el aprobado.
-    const parsed = rows
-      .map((row) => wompiTransactionSchema.safeParse(row))
-      .flatMap((r) => (r.success ? [r.data] : []))
-    const winner = parsed.find((t) => t.status === "APPROVED") ?? parsed.at(-1)
-
-    return winner ? toPaymentStatus(winner) : null
+  /**
+   * Reconciliador para `expireStale`: prueba los ids de transacción que ya
+   * conocemos de esa orden y se queda con el primero que resuelva algo.
+   *
+   * Sin ningún id conocido no hay nada que preguntar: significa que el
+   * cliente nunca llegó a generar una transacción de la que nos enteráramos,
+   * y la orden se expira con normalidad.
+   */
+  async reconcile(order: {
+    orderNumber: string
+    transactionIds: readonly string[]
+  }): Promise<PaymentStatus | null> {
+    for (const id of order.transactionIds) {
+      const status = await this.fetchById(id)
+      if (status && status.status !== "PENDING") return status
+    }
+    return null
   }
 }
 

@@ -31,7 +31,7 @@ async function handle(request: Request): Promise<NextResponse> {
     // real. Es el caso del webhook que nunca llegó: si se expirara sin
     // preguntar, el cliente quedaría cobrado y sin pedido.
     const gateway = wompiGateway()
-    const reconcile = gateway ? (ref: string) => gateway.fetchByReference(ref) : undefined
+    const reconcile = gateway ? gateway.reconcile.bind(gateway) : undefined
 
     // Las cuentas van en la respuesta, que es lo que lee quien monitorea;
     // no hace falta además una línea de log por cada pasada en vacío.
