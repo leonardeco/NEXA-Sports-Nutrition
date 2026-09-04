@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# Higiene del mensaje de commit.
+#
+# Dos reglas del proyecto que conviene no dejar a la memoria de nadie:
+#
+#   1. Los mensajes no llevan pies de atribución. La autoría de un commit la
+#      dicen sus campos author y committer, no un renglón al final.
+#   2. Los mensajes no llevan emoji. El historial se lee en terminales, en
+#      diffs y en clientes que no los renderizan igual.
+#
+# Se activa con:  git config core.hooksPath .githooks
+
+msg="$1"
+
+# ── 1. Quitar pies de atribución ────────────────────────────────────────────
+sed -i -E '/^[[:space:]]*Co-[Aa]uthored-[Bb]y:/d' "$msg"
+sed -i -E '/^[[:space:]]*(Assisted-by|Generated-by|Signed-off-by-tool):/d' "$msg"
+sed -i -E '/^[[:space:]]*Generated with /d' "$msg"
+
+# ── 2. Rechazar emoji y pictogramas ─────────────────────────────────────────
+# Se comprueba sobre los bytes UTF-8 crudos: `grep -P` se niega a trabajar
+# cuando el locale no es UTF-8, que es el caso en Git Bash sobre Windows.
+#
+#   F0 9F        U+1F000-U+1FFFF  pictogramas del plano astral
+#   EF B8 8F     U+FE0F           selector de presentación emoji
+#   E2 98-9E     U+2600-U+27BF    símbolos misceláneos y dingbats
+#
+# Quedan fuera a propósito, porque la documentación los usa de verdad:
+#   E2 86/87     flechas      DRAFT -> PENDING_PAYMENT
+#   E2 94/95     marcos       las cabeceras de comentario del proyecto
+#   E2 80        guion largo      C2 B7  punto medio
+if command -v perl >/dev/null 2>&1; then
+  if ! perl -ne 'exit 1 if /\xF0\x9F|\xEF\xB8\x8F|\xE2[\x98-\x9E]/' "$msg"; then
+    echo "" >&2
+    echo "  Commit rechazado: el mensaje contiene emoji." >&2
+    echo "" >&2
+    exit 1
+  fi
+fi
+
+# ── 3. Dejar limpias las líneas en blanco sobrantes al final ────────────────
+cleaned="$(cat "$msg")"
+printf '%s\n' "$cleaned" > "$msg"
+
+exit 0
