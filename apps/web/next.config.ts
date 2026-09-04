@@ -1,5 +1,14 @@
+import { existsSync } from "node:fs"
 import path from "node:path"
+import { config as loadEnvFile } from "dotenv"
 import type { NextConfig } from "next"
+
+// El .env es único y vive en la raíz del monorepo, pero Next solo busca
+// dentro de apps/web y se quedaría sin DATABASE_URL. Se carga a mano antes
+// de compilar nada. En producción el archivo no existe y las variables las
+// pone la plataforma, así que la comprobación de existencia no sobra.
+const rootEnv = path.join(import.meta.dirname, "../../.env")
+if (existsSync(rootEnv)) loadEnvFile({ path: rootEnv })
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

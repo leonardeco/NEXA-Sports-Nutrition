@@ -19,6 +19,7 @@
     "db:migrate": "pnpm --filter @nexa/db migrate",
     "db:push": "pnpm --filter @nexa/db push",
     "db:seed": "pnpm --filter @nexa/db seed",
+    "db:admin": "pnpm --filter @nexa/db admin",
     "db:studio": "pnpm --filter @nexa/db studio",
     "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f infra/docker/docker-compose.yml down",

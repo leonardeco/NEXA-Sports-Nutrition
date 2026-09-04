@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { STORE, whatsappLink } from "@/lib/config"
+import { CartBadge } from "./cart-badge"
 import { NexaMark } from "./nexa-mark"
 
 export function SiteHeader() {
@@ -29,6 +30,7 @@ export function SiteHeader() {
           >
             Contacto
           </Link>
+          <CartBadge />
         </nav>
       </div>
     </header>
