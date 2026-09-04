@@ -139,6 +139,14 @@ para cobrar. El inventario no es un contador que se suma y se resta, sino un lib
 movimientos donde cada faltante es explicable
 ([ADR-0004](docs/hydraia/adr/0004-inventario-como-libro-de-movimientos.md)).
 
+**Los mensajes de commit no llevan emoji ni pies de atribución.** La autoría la dicen los
+campos `author` y `committer`, no un renglón al final. Hay un gancho que lo verifica; se
+activa una vez por clon:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Sobre Kubernetes
 
 Los manifiestos de `infra/k8s` **no son el despliegue en uso**. La producción de esta fase
