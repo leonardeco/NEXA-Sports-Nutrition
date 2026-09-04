@@ -213,8 +213,18 @@ export interface OrderPage {
   readonly total: number
 }
 
-/** Consulta a la pasarela por el estado real de una orden. */
-export type PaymentReconciler = (orderNumber: string) => Promise<PaymentStatus | null>
+/**
+ * Consulta a la pasarela por el estado real de una orden.
+ *
+ * Recibe los ids de transacción que ya se conocen —del webhook, o del que la
+ * pasarela añade al redirect— porque el único endpoint de consulta
+ * documentado de Wompi busca por id, no por referencia. Sin ningún id no hay
+ * nada que preguntar.
+ */
+export type PaymentReconciler = (order: {
+  readonly orderNumber: string
+  readonly transactionIds: readonly string[]
+}) => Promise<PaymentStatus | null>
 
 export interface ExpiryReport {
   /** Órdenes que se dieron por perdidas y devolvieron su stock. */
@@ -308,5 +318,5 @@ export interface PaymentGateway {
    */
   verifyEvent(body: unknown): { transaction: PaymentStatus; eventId: string } | null
   /** Reconciliación (RF-15): el estado real cuando el webhook no llegó. */
-  fetchByReference(reference: string): Promise<PaymentStatus | null>
+  fetchById(transactionId: string): Promise<PaymentStatus | null>
 }

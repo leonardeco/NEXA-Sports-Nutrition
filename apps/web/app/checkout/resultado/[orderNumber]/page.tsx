@@ -5,6 +5,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { STORE, whatsappLink } from "@/lib/config"
 import { readSession } from "@/lib/session"
+import { wompiGateway } from "@/lib/wompi"
 import { PaymentPoller } from "./payment-poller"
 
 export const dynamic = "force-dynamic"
@@ -15,24 +16,43 @@ export const metadata: Metadata = {
 }
 
 type Params = Promise<{ orderNumber: string }>
+type Search = Promise<{ id?: string }>
 
 /**
  * Adonde vuelve el cliente desde Wompi.
  *
- * Regla no negociable de ADR-0003: **este redirect no confirma nada**. Aquí
- * no se lee ningún parámetro que venga de la pasarela ni se cambia el estado
- * de la orden. Solo se consulta lo que dice nuestra base, que se actualiza
- * únicamente por webhook o por reconciliación.
+ * Regla no negociable de ADR-0003: **el redirect no confirma nada**. Se
+ * respeta al pie, y conviene ver por qué lo que sigue no la viola.
  *
- * Como el webhook puede tardar unos segundos, mientras la orden siga
- * pendiente se consulta cada pocos segundos hasta que se resuelva.
+ * Wompi añade `?id=<transacción>` al volver. Ese parámetro es manipulable,
+ * así que NO se usa como estado — se usa como identificador. Con él se le
+ * pregunta a Wompi, con nuestras credenciales, cuál es el estado real; y lo
+ * que responda pasa además por la comprobación de importe contra el total de
+ * la orden. Quien inventara un id ajeno solo conseguiría un rechazo.
+ *
+ * Esto no sustituye al webhook: lo adelanta. El webhook sigue siendo la vía
+ * principal y los dos son idempotentes, así que da igual cuál llegue antes.
+ * A cambio, el cliente ve su confirmación al instante en vez de mirar una
+ * ruedita, y el id queda guardado para que la reconciliación pueda usarlo si
+ * el webhook nunca aparece.
  */
-export default async function ResultadoPage({ params }: { params: Params }) {
+export default async function ResultadoPage({
+  params,
+  searchParams,
+}: {
+  params: Params
+  searchParams: Search
+}) {
   const { orderNumber } = await params
+  const { id: transactionId } = await searchParams
 
   const sessionId = await readSession()
-  const order = sessionId ? await orderRepository.findByNumber(orderNumber, sessionId) : null
+  let order = sessionId ? await orderRepository.findByNumber(orderNumber, sessionId) : null
   if (!order) notFound()
+
+  if (transactionId && order.status === "PENDING_PAYMENT") {
+    order = (await resolveWithGateway(orderNumber, transactionId)) ?? order
+  }
 
   const pagado = order.status === "PAID"
   const fallido = order.status === "PAYMENT_FAILED"
@@ -102,4 +122,32 @@ export default async function ResultadoPage({ params }: { params: Params }) {
       </div>
     </main>
   )
+}
+
+/**
+ * Le pregunta a Wompi por la transacción y aplica lo que responda.
+ *
+ * Nada de lo que falle aquí debe tumbar la página: si la pasarela no
+ * contesta, o el id no es de esta orden, el cliente ve igualmente su pedido
+ * y el webhook —o la reconciliación— resolverá por su cuenta. Por eso se
+ * tragan los errores en vez de propagarlos.
+ */
+async function resolveWithGateway(orderNumber: string, transactionId: string) {
+  const gateway = wompiGateway()
+  if (!gateway) return null
+
+  try {
+    const payment = await gateway.fetchById(transactionId)
+    // Un id que no corresponde a esta orden se descarta sin más. La
+    // comprobación de importe de applyPayment lo atraparía igual, pero
+    // rechazarlo aquí evita ensuciar el registro de pagos.
+    if (!payment || payment.reference !== orderNumber) return null
+
+    // Aunque siga PENDING se aplica: registra el id de transacción, que es
+    // lo que necesitará la reconciliación si el webhook nunca llega.
+    return await orderRepository.applyPayment(orderNumber, payment)
+  } catch (error) {
+    console.error(`[wompi] no se pudo resolver ${orderNumber} desde el redirect`, error)
+    return null
+  }
 }

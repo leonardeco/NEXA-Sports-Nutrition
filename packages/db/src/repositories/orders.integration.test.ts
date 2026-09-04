@@ -346,7 +346,7 @@ describe("pagos (ADR-0003)", () => {
     expect(await stockNow()).toBe(originalStock)
   })
 
-  it("pendiente no mueve la orden ni el stock", async () => {
+  it("pendiente no mueve la orden ni el stock, pero guarda el id", async () => {
     const { order, aprobado } = await ordenPendiente()
 
     const igual = await orders.applyPayment(order.orderNumber, {
@@ -356,6 +356,13 @@ describe("pagos (ADR-0003)", () => {
 
     expect(igual.status).toBe("PENDING_PAYMENT")
     expect(await stockNow()).toBe(originalStock - 2)
+
+    // El id se registra igual: es lo que la reconciliación necesitará para
+    // poder preguntarle a Wompi si el webhook nunca llega.
+    const pago = await prisma.payment.findUniqueOrThrow({
+      where: { providerTransactionId: aprobado.transactionId },
+    })
+    expect(pago.status).toBe("PENDING")
   })
 
   it("rechaza un pago cuyo importe no es el de la orden", async () => {
@@ -423,6 +430,35 @@ describe("reconciliación (RF-15)", () => {
     expect(resuelta.status).toBe("PAID")
     // Se vendió: el stock NO vuelve al catálogo.
     expect(await stockNow()).toBe(originalStock - 2)
+  })
+
+  it("le pasa al reconciliador los ids de transacción que ya conoce", async () => {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, 2)
+    const order = await orders.checkout(session, CUSTOMER)
+
+    // El redirect dejó constancia del intento antes de que llegara nada más.
+    const transactionId = `txn-${randomUUID()}`
+    await orders.applyPayment(order.orderNumber, {
+      transactionId,
+      reference: order.orderNumber,
+      status: "PENDING",
+      amountCents: order.totalCents,
+      currency: "COP",
+      method: "PSE",
+    })
+    await vencer(cartId)
+
+    let visto: readonly string[] = []
+    await orders.expireStale(new Date(), async (o) => {
+      visto = o.transactionIds
+      return null
+    })
+
+    // Sin esto la reconciliación no tendría por dónde preguntar: el único
+    // endpoint documentado de Wompi busca por id, no por referencia.
+    expect(visto).toContain(transactionId)
   })
 
   it("expira cuando la pasarela no sabe nada de la orden", async () => {
