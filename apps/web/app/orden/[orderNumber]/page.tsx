@@ -3,6 +3,7 @@ import { Money, type OrderStatus } from "@nexa/core"
 import { orderRepository } from "@nexa/db"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { WompiButton } from "@/app/components/wompi-button"
 import { STORE, whatsappLink } from "@/lib/config"
 import { readSession } from "@/lib/session"
 
@@ -119,19 +120,24 @@ export default async function OrdenPage({ params }: { params: Params }) {
         </p>
       </section>
 
+      {/* Wompi primero; si no está configurada, no se renderiza y queda
+          WhatsApp, que nunca desaparece (ADR-0003, RNF-03). */}
+      {pendiente && (
+        <WompiButton orderNumber={order.orderNumber} totalCents={order.totalCents} />
+      )}
+
       {/* RF-16 · el traspaso a un humano conserva el número de orden. */}
       <a
         href={whatsappLink(mensaje)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-8 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
+        className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
         style={{ background: "var(--color-nexa-whatsapp)" }}
       >
-        Coordinar el pago por WhatsApp
+        {pendiente ? "Prefiero coordinarlo por WhatsApp" : "Escribirnos por WhatsApp"}
       </a>
       <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Te escribimos al {STORE.whatsappDisplay}. El pago en línea con Wompi llega en la
-        siguiente fase.
+        Te atendemos al {STORE.whatsappDisplay}.
       </p>
     </main>
   )

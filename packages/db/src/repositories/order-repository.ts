@@ -14,10 +14,14 @@
 import {
   Money,
   RESERVATION_TTL_MINUTES,
+  assertPayable,
   assertTransition,
+  orderStatusForTransaction,
   shippingFor,
   type CheckoutInput,
+  type ExpiryReport,
   type Id,
+  type PaymentReconciler,
   type OrderDetail,
   type OrderLine,
   type OrderPage,
@@ -25,6 +29,7 @@ import {
   type OrderRepository,
   type OrderStatus,
   type OrderSummary,
+  type PaymentStatus,
   type ShippingPolicy,
 } from "@nexa/core"
 import type { Prisma, PrismaClient } from "../../generated/client/index.js"
@@ -59,6 +64,15 @@ const detailInclude = {
 } satisfies Prisma.OrderInclude
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof detailInclude }>
+
+/**
+ * Prisma distingue "no tocar la columna" de "poner null" en un campo Json,
+ * y pasar `undefined` dentro del objeto de datos no es lo mismo que omitir
+ * la clave. Esto la omite cuando no hay carga que guardar.
+ */
+function rawFor(rawPayload: unknown): { rawPayload?: Prisma.InputJsonValue } {
+  return rawPayload === undefined ? {} : { rawPayload: rawPayload as Prisma.InputJsonValue }
+}
 
 function toOrderLine(item: OrderRow["items"][number]): OrderLine {
   return {
@@ -249,6 +263,81 @@ export class PrismaOrderRepository implements OrderRepository {
   }
 
   /**
+   * ADR-0003, punto 4 · un solo COMMIT para el estado de la orden, los
+   * movimientos de inventario y el registro del pago.
+   *
+   * Es el punto más delicado del sistema. Tres cosas lo sostienen:
+   *
+   * 1. Se comprueba el importe contra el total de la orden. La firma de
+   *    Wompi no cubre `reference`, así que sin esto un evento legítimo de
+   *    mil pesos podría reenviarse apuntando a una orden de medio millón.
+   * 2. Si la orden ya está PAID no se hace nada. El webhook reintenta y la
+   *    reconciliación puede pisarlo; ninguno de los dos debe descontar dos
+   *    veces (RF-13).
+   * 3. `commitSale` es idempotente por su cuenta, así que ni siquiera un
+   *    fallo a medio camino deja el libro descuadrado.
+   */
+  async applyPayment(
+    orderNumber: string,
+    payment: PaymentStatus,
+    rawPayload?: unknown,
+  ): Promise<OrderDetail> {
+    return this.db.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { orderNumber },
+        select: { id: true, status: true, totalCents: true },
+      })
+      if (!order) throw new OrderNotFoundError(orderNumber)
+
+      assertPayable({
+        expectedCents: Money.fromCents(order.totalCents),
+        actualCents: payment.amountCents,
+        currency: payment.currency,
+      })
+
+      // El registro del pago se guarda siempre, incluso si no mueve la
+      // orden: es la traza de qué dijo la pasarela y cuándo (RNF-07).
+      await tx.payment.upsert({
+        where: { providerTransactionId: payment.transactionId },
+        update: { status: payment.status, method: payment.method, ...rawFor(rawPayload) },
+        create: {
+          orderId: order.id,
+          providerTransactionId: payment.transactionId,
+          status: payment.status,
+          method: payment.method,
+          amountCents: payment.amountCents,
+          ...rawFor(rawPayload),
+        },
+      })
+
+      const target = orderStatusForTransaction(payment.status)
+      const yaResuelta = target === null || order.status === target
+
+      if (!yaResuelta) {
+        assertTransition(order.status, target)
+        const inventory = new PrismaInventoryService(tx)
+
+        if (target === "PAID") {
+          await inventory.commitSale(order.id)
+        } else {
+          // Rechazado, anulado o con error: la reserva vuelve al catálogo
+          // en el acto, sin esperar a que venza sola.
+          await inventory.releaseReservation(order.id)
+        }
+
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: target, paidAt: target === "PAID" ? new Date() : null },
+        })
+      }
+
+      return toDetail(
+        await tx.order.findUniqueOrThrow({ where: { id: order.id }, include: detailInclude }),
+      )
+    })
+  }
+
+  /**
    * RF-09 · libera lo que venció y marca la orden EXPIRED. Cada orden va en
    * su propia transacción para que una fallida no arrastre a las demás, y se
    * relee el estado dentro de ella porque el pago pudo entrar entre la
@@ -257,18 +346,42 @@ export class PrismaOrderRepository implements OrderRepository {
    * F3 añadirá aquí el paso de RF-15: preguntarle a Wompi por el estado real
    * de la transacción antes de dar por perdida la orden.
    */
-  async expireStale(now: Date): Promise<number> {
+  async expireStale(now: Date, reconcile?: PaymentReconciler): Promise<ExpiryReport> {
     const stale = await this.db.order.findMany({
       where: {
         status: "PENDING_PAYMENT",
         movements: { some: { reason: "RESERVATION", expiresAt: { lte: now } } },
       },
-      select: { id: true },
+      select: { id: true, orderNumber: true },
     })
 
     let expired = 0
-    for (const { id } of stale) {
+    let reconciled = 0
+
+    for (const { id, orderNumber } of stale) {
+      // RF-15 · preguntar antes de dar por perdido. Si la pasarela dice que
+      // se cobró, la orden se resuelve y no se expira: expirarla habría
+      // dejado al cliente pagado y sin pedido.
+      if (reconcile) {
+        try {
+          const payment = await reconcile(orderNumber)
+          if (payment && orderStatusForTransaction(payment.status) !== null) {
+            await this.applyPayment(orderNumber, payment)
+            reconciled += 1
+            continue
+          }
+        } catch (error) {
+          // Que la pasarela no conteste no puede bloquear al resto de
+          // órdenes; esta se queda pendiente y se reintenta en la siguiente
+          // pasada, que es más seguro que expirarla a ciegas.
+          console.error(`[reconciliación] ${orderNumber} no se pudo consultar`, error)
+          continue
+        }
+      }
+
       const didExpire = await this.db.$transaction(async (tx) => {
+        // Se relee dentro de la transacción: el pago pudo entrar entre la
+        // consulta inicial y este momento.
         const fresh = await tx.order.findUnique({ where: { id }, select: { status: true } })
         if (fresh?.status !== "PENDING_PAYMENT") return false
 
@@ -278,7 +391,8 @@ export class PrismaOrderRepository implements OrderRepository {
       })
       if (didExpire) expired += 1
     }
-    return expired
+
+    return { expired, reconciled }
   }
 
   /** Reaprovecha el cliente si ya compró antes con el mismo correo. */

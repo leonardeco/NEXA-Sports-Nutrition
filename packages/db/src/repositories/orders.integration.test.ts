@@ -9,7 +9,7 @@
 
 import { randomUUID } from "node:crypto"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
-import { Money, type CheckoutInput } from "@nexa/core"
+import { Money, type CheckoutInput, type PaymentStatus } from "@nexa/core"
 import { PrismaClient } from "../../generated/client/index.js"
 import { PrismaCartRepository } from "./cart-repository"
 import { InsufficientStockError, PrismaInventoryService } from "./inventory-service"
@@ -247,7 +247,7 @@ describe("expiración (RF-09)", () => {
       data: { expiresAt: new Date(Date.now() - 60_000) },
     })
 
-    const expired = await orders.expireStale(new Date())
+    const { expired } = await orders.expireStale(new Date())
 
     expect(expired).toBeGreaterThanOrEqual(1)
     const order = await prisma.order.findUniqueOrThrow({ where: { id: cartId } })
@@ -269,6 +269,193 @@ describe("expiración (RF-09)", () => {
     await orders.expireStale(new Date())
 
     expect(await stockNow()).toBe(originalStock)
+  })
+})
+
+describe("pagos (ADR-0003)", () => {
+  /** Deja el carrito hecho orden y devuelve lo que Wompi diría de ella. */
+  async function ordenPendiente(unidades = 2) {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, unidades)
+    const order = await orders.checkout(session, CUSTOMER)
+
+    const aprobado: PaymentStatus = {
+      transactionId: `txn-${randomUUID()}`,
+      reference: order.orderNumber,
+      status: "APPROVED",
+      amountCents: order.totalCents,
+      currency: "COP",
+      method: "NEQUI",
+    }
+    return { cartId, order, aprobado }
+  }
+
+  it("aprobado deja la orden PAID con el stock descontado", async () => {
+    const { order, aprobado } = await ordenPendiente()
+    expect(await stockNow()).toBe(originalStock - 2)
+
+    const pagada = await orders.applyPayment(order.orderNumber, aprobado)
+
+    expect(pagada.status).toBe("PAID")
+    expect(pagada.paidAt).not.toBeNull()
+    // La unidad ya salió al reservarse: cobrar no la descuenta otra vez.
+    expect(await stockNow()).toBe(originalStock - 2)
+  })
+
+  it("escribe la venta en el libro y el pago en su tabla", async () => {
+    const { cartId, order, aprobado } = await ordenPendiente()
+    await orders.applyPayment(order.orderNumber, aprobado, { evento: "de prueba" })
+
+    const venta = await prisma.inventoryMovement.findFirstOrThrow({
+      where: { orderId: cartId, reason: "SALE" },
+    })
+    expect(venta.delta).toBe(-2)
+
+    const pago = await prisma.payment.findUniqueOrThrow({
+      where: { providerTransactionId: aprobado.transactionId },
+    })
+    expect(pago.status).toBe("APPROVED")
+    expect(pago.amountCents).toBe(order.totalCents)
+    expect(pago.rawPayload).toEqual({ evento: "de prueba" })
+  })
+
+  it("reaplicar el mismo pago no descuenta dos veces (RF-13)", async () => {
+    const { cartId, order, aprobado } = await ordenPendiente()
+
+    await orders.applyPayment(order.orderNumber, aprobado)
+    await orders.applyPayment(order.orderNumber, aprobado)
+    await orders.applyPayment(order.orderNumber, aprobado)
+
+    expect(await stockNow()).toBe(originalStock - 2)
+    const ventas = await prisma.inventoryMovement.count({
+      where: { orderId: cartId, reason: "SALE" },
+    })
+    expect(ventas).toBe(1)
+  })
+
+  it("rechazado devuelve el stock sin esperar a que venza la reserva", async () => {
+    const { order, aprobado } = await ordenPendiente()
+
+    const fallida = await orders.applyPayment(order.orderNumber, {
+      ...aprobado,
+      status: "DECLINED",
+    })
+
+    expect(fallida.status).toBe("PAYMENT_FAILED")
+    expect(await stockNow()).toBe(originalStock)
+  })
+
+  it("pendiente no mueve la orden ni el stock", async () => {
+    const { order, aprobado } = await ordenPendiente()
+
+    const igual = await orders.applyPayment(order.orderNumber, {
+      ...aprobado,
+      status: "PENDING",
+    })
+
+    expect(igual.status).toBe("PENDING_PAYMENT")
+    expect(await stockNow()).toBe(originalStock - 2)
+  })
+
+  it("rechaza un pago cuyo importe no es el de la orden", async () => {
+    // El ataque que la firma de Wompi NO cubre: reenviar un evento legítimo
+    // de mil pesos apuntando a la referencia de una orden grande.
+    const { cartId, order, aprobado } = await ordenPendiente()
+
+    await expect(
+      orders.applyPayment(order.orderNumber, {
+        ...aprobado,
+        amountCents: Money.fromCOP(1_000),
+      }),
+    ).rejects.toThrow(/no coincide/)
+
+    const sinTocar = await prisma.order.findUniqueOrThrow({ where: { id: cartId } })
+    expect(sinTocar.status).toBe("PENDING_PAYMENT")
+    expect(await stockNow()).toBe(originalStock - 2)
+  })
+
+  it("rechaza un pago en otra moneda", async () => {
+    const { order, aprobado } = await ordenPendiente()
+
+    await expect(
+      orders.applyPayment(order.orderNumber, { ...aprobado, currency: "USD" }),
+    ).rejects.toThrow(/Moneda/)
+  })
+
+  it("no inventa una orden que no existe", async () => {
+    const { aprobado } = await ordenPendiente()
+
+    await expect(
+      orders.applyPayment("NEXA-000000-XXXXXX", aprobado),
+    ).rejects.toThrow()
+  })
+})
+
+describe("reconciliación (RF-15)", () => {
+  /** Adelanta el reloj de la reserva para no esperar media hora. */
+  async function vencer(orderId: string) {
+    await prisma.inventoryMovement.updateMany({
+      where: { orderId, reason: "RESERVATION" },
+      data: { expiresAt: new Date(Date.now() - 60_000) },
+    })
+  }
+
+  it("no expira una orden que la pasarela dice que sí se pagó", async () => {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, 2)
+    const order = await orders.checkout(session, CUSTOMER)
+    await vencer(cartId)
+
+    // El webhook nunca llegó, pero el cobro sí ocurrió.
+    const report = await orders.expireStale(new Date(), async () => ({
+      transactionId: `txn-${randomUUID()}`,
+      reference: order.orderNumber,
+      status: "APPROVED" as const,
+      amountCents: order.totalCents,
+      currency: "COP",
+      method: "PSE",
+    }))
+
+    expect(report.reconciled).toBeGreaterThanOrEqual(1)
+    const resuelta = await prisma.order.findUniqueOrThrow({ where: { id: cartId } })
+    expect(resuelta.status).toBe("PAID")
+    // Se vendió: el stock NO vuelve al catálogo.
+    expect(await stockNow()).toBe(originalStock - 2)
+  })
+
+  it("expira cuando la pasarela no sabe nada de la orden", async () => {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, 2)
+    await orders.checkout(session, CUSTOMER)
+    await vencer(cartId)
+
+    const report = await orders.expireStale(new Date(), async () => null)
+
+    expect(report.expired).toBeGreaterThanOrEqual(1)
+    const expirada = await prisma.order.findUniqueOrThrow({ where: { id: cartId } })
+    expect(expirada.status).toBe("EXPIRED")
+    expect(await stockNow()).toBe(originalStock)
+  })
+
+  it("no expira a ciegas si la pasarela no contesta", async () => {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, 2)
+    await orders.checkout(session, CUSTOMER)
+    await vencer(cartId)
+
+    const report = await orders.expireStale(new Date(), async () => {
+      throw new Error("Wompi no responde")
+    })
+
+    expect(report.expired).toBe(0)
+    const pendiente = await prisma.order.findUniqueOrThrow({ where: { id: cartId } })
+    expect(pendiente.status).toBe("PENDING_PAYMENT")
+    // El stock sigue apartado: se reintentará en la próxima pasada.
+    expect(await stockNow()).toBe(originalStock - 2)
   })
 })
 

@@ -15,6 +15,23 @@ export type {
 export { Money, MoneyError } from "./money"
 export type { Cents } from "./money"
 export {
+  PaymentError,
+  assertPayable,
+  eventChecksumPayload,
+  eventIdFor,
+  integrityPayload,
+  orderStatusForTransaction,
+  wompiEventSchema,
+  wompiTransactionSchema,
+  wompiTransactionStatusSchema,
+} from "./payment"
+export type {
+  IntegrityInput,
+  WompiEvent,
+  WompiTransaction,
+  WompiTransactionStatus,
+} from "./payment"
+export {
   CartError,
   buildCart,
   resolveQuantity,
@@ -48,7 +65,9 @@ export type {
   CartRepository,
   CategoryRef,
   CheckoutInput,
+  ExpiryReport,
   Id,
+  PaymentReconciler,
   ImageRef,
   InventoryReason,
   InventoryService,
@@ -61,6 +80,7 @@ export type {
   OrderSummary,
   PaymentGateway,
   PaymentIntent,
+  PaymentResult,
   PaymentStatus,
   ProductDetail,
   ProductPage,

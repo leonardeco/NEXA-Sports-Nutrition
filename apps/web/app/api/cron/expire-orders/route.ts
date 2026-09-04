@@ -1,6 +1,7 @@
 import { orderRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
 import { errorResponse } from "@/lib/api"
+import { wompiGateway } from "@/lib/wompi"
 
 export const dynamic = "force-dynamic"
 
@@ -26,9 +27,15 @@ async function handle(request: Request): Promise<NextResponse> {
   }
 
   try {
-    // La cuenta va en la respuesta, que es lo que lee quien monitorea; no
-    // hace falta además una línea de log por cada pasada en vacío.
-    return NextResponse.json({ expired: await orderRepository.expireStale(new Date()) })
+    // RF-15 · antes de expirar nada se le pregunta a Wompi por el estado
+    // real. Es el caso del webhook que nunca llegó: si se expirara sin
+    // preguntar, el cliente quedaría cobrado y sin pedido.
+    const gateway = wompiGateway()
+    const reconcile = gateway ? (ref: string) => gateway.fetchByReference(ref) : undefined
+
+    // Las cuentas van en la respuesta, que es lo que lee quien monitorea;
+    // no hace falta además una línea de log por cada pasada en vacío.
+    return NextResponse.json(await orderRepository.expireStale(new Date(), reconcile))
   } catch (error) {
     return errorResponse(error)
   }

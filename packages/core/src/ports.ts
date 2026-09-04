@@ -213,6 +213,16 @@ export interface OrderPage {
   readonly total: number
 }
 
+/** Consulta a la pasarela por el estado real de una orden. */
+export type PaymentReconciler = (orderNumber: string) => Promise<PaymentStatus | null>
+
+export interface ExpiryReport {
+  /** Órdenes que se dieron por perdidas y devolvieron su stock. */
+  readonly expired: number
+  /** Órdenes que sí estaban pagadas y se resolvieron con la pasarela. */
+  readonly reconciled: number
+}
+
 export interface OrderRepository {
   /**
    * Convierte el carrito en orden: recalcula los importes desde la base
@@ -232,11 +242,33 @@ export interface OrderRepository {
   /** Transición manual desde el panel. Valida contra la máquina de estados. */
   changeStatus(orderId: Id, to: OrderStatus): Promise<OrderDetail>
   /**
-   * RF-09 · libera las reservas vencidas y marca las órdenes como EXPIRED.
-   * Devuelve cuántas expiró. Idempotente: correrlo dos veces no libera dos
-   * veces el mismo stock.
+   * Aplica el resultado de un pago (ADR-0003, punto 4): cambio de estado,
+   * movimientos de inventario y registro del pago en un solo COMMIT. No
+   * existe un instante en que la orden esté pagada y el stock intacto.
+   *
+   * Idempotente: reaplicar el mismo resultado no vuelve a descontar. Es lo
+   * que permite que Wompi reintente y que la reconciliación pise al webhook
+   * sin consecuencias.
    */
-  expireStale(now: Date): Promise<number>
+  applyPayment(
+    orderNumber: string,
+    payment: PaymentStatus,
+    rawPayload?: unknown,
+  ): Promise<OrderDetail>
+  /**
+   * RF-09 y RF-15 · resuelve las órdenes cuyo plazo venció.
+   *
+   * Antes de dar una por perdida se le pregunta a la pasarela por su estado
+   * real, si se le pasa con qué preguntar. Ese es el caso del webhook que
+   * nunca llegó: el más común y el más caro de esta integración, porque deja
+   * al cliente cobrado y sin pedido.
+   *
+   * `reconcile` se inyecta porque el adaptador de la pasarela vive en la
+   * aplicación, no aquí. Sin él, expira sin preguntar.
+   *
+   * Idempotente: correrlo dos veces no libera dos veces el mismo stock.
+   */
+  expireStale(now: Date, reconcile?: PaymentReconciler): Promise<ExpiryReport>
 }
 
 // ════════════════════════════════════════════════════════════════ PAGOS ══
@@ -250,18 +282,31 @@ export interface PaymentIntent {
   redirectUrl: string
 }
 
+export type PaymentResult = "APPROVED" | "DECLINED" | "VOIDED" | "ERROR" | "PENDING"
+
 export interface PaymentStatus {
-  transactionId: string
-  status: "APPROVED" | "DECLINED" | "VOIDED" | "ERROR" | "PENDING"
-  amountCents: Cents
-  method: string | null
+  readonly transactionId: string
+  /** La referencia que se le envió a la pasarela: es el `orderNumber`. */
+  readonly reference: string
+  readonly status: PaymentResult
+  readonly amountCents: Cents
+  readonly currency: string
+  readonly method: string | null
 }
 
 /** Pasarela de pagos — ADR-0003. Implementado por el adaptador de Wompi. */
 export interface PaymentGateway {
-  createIntent(reference: string, amountCents: Cents): Promise<PaymentIntent>
-  /** Verifica la firma del webhook ANTES de tocar la base de datos. */
-  verifyWebhookSignature(rawBody: string, checksum: string, timestamp: string): boolean
-  /** Reconciliación: consulta el estado real cuando el webhook no llegó. */
-  fetchTransaction(transactionId: string): Promise<PaymentStatus>
+  /**
+   * No hace red: con Checkout Web la "intención" es la firma de integridad,
+   * que se calcula en local. Por eso es síncrona — fingir una promesa aquí
+   * sugeriría una llamada externa que no existe.
+   */
+  createIntent(reference: string, amountCents: Cents): PaymentIntent
+  /**
+   * Verifica el checksum del evento ANTES de tocar la base de datos. Recibe
+   * el cuerpo sin validar y devuelve el evento si cuadra, o null.
+   */
+  verifyEvent(body: unknown): { transaction: PaymentStatus; eventId: string } | null
+  /** Reconciliación (RF-15): el estado real cuando el webhook no llegó. */
+  fetchByReference(reference: string): Promise<PaymentStatus | null>
 }
