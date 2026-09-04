@@ -8,11 +8,11 @@
   },
   "scripts": {
     "generate": "prisma generate",
-    "migrate": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy",
-    "push": "prisma db push",
-    "studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts",
+    "migrate": "dotenv -e ../../.env -- prisma migrate dev",
+    "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
+    "push": "dotenv -e ../../.env -- prisma db push",
+    "studio": "dotenv -e ../../.env -- prisma studio",
+    "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "dotenv-cli": "^11.0.0",
     "prisma": "^6.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
