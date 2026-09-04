@@ -4,6 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Money } from "@nexa/core"
 import { productRepository } from "@nexa/db"
+import { AddToCart } from "@/app/components/add-to-cart"
 import { STORE, whatsappLink } from "@/lib/config"
 
 export const dynamic = "force-dynamic"
@@ -31,7 +32,10 @@ export default async function ProductoPage({ params }: { params: Params }) {
   const product = await productRepository.findBySlug(slug)
   if (!product) notFound()
 
-  const agotado = product.stock <= 0
+  // El catálogo migrado da una variante por producto; la por defecto va
+  // primera. Cuando haya sabores de verdad, aquí entra un selector.
+  const variante = product.variants[0]
+  const agotado = product.stock <= 0 || !variante
   const mensaje = `Hola, me interesa el producto *${product.name}* (${product.brand.name}) — ${Money.format(product.priceCents)}. ¿Está disponible?`
 
   // Datos estructurados para resultados enriquecidos (RNF-10).
@@ -125,7 +129,13 @@ export default async function ProductoPage({ params }: { params: Params }) {
             )}
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          {variante && (
+            <div className="mt-6">
+              <AddToCart variantId={variante.id} stock={variante.stock} disabled={agotado} />
+            </div>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-3">
             <a
               href={whatsappLink(mensaje)}
               target="_blank"
@@ -138,8 +148,8 @@ export default async function ProductoPage({ params }: { params: Params }) {
           </div>
 
           <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
-            El pago en línea con Wompi llega en la siguiente fase. Por ahora el pedido se
-            coordina por WhatsApp al {STORE.whatsappDisplay}.
+            El pago en línea con Wompi llega en la siguiente fase. Puedes armar tu pedido
+            aquí y cerrarlo por WhatsApp al {STORE.whatsappDisplay}.
           </p>
 
           {product.description && (

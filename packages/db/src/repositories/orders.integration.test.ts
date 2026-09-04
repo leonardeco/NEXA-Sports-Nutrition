@@ -308,6 +308,19 @@ describe("libro de inventario (ADR-0004)", () => {
     expect(sales).toBe(1)
   })
 
+  it("no reporta descuadre entre el caché y el libro", async () => {
+    const session = await newSession()
+    const cartId = await trackCart(session)
+    await carts.addItem(session, variantId, 2)
+    await orders.checkout(session, CUSTOMER)
+    await new PrismaInventoryService(prisma).commitSale(cartId)
+
+    // Ejercita el SQL a mano de findDrift, que es donde se cuelan los
+    // nombres de columna equivocados sin que TypeScript diga nada.
+    const drift = await new PrismaInventoryService(prisma).findDrift()
+    expect(drift.filter((d) => d.variantId === variantId)).toHaveLength(0)
+  })
+
   it("cuadra el caché de stock con la suma del libro", async () => {
     const session = await newSession()
     const cartId = await trackCart(session)

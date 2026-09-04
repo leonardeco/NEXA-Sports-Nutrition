@@ -163,7 +163,7 @@ export interface CheckoutInput {
   readonly phone: string
   readonly shippingCity: string
   readonly shippingAddress: string
-  readonly notes?: string
+  readonly notes?: string | undefined
 }
 
 export interface OrderLine {
@@ -203,9 +203,9 @@ export interface OrderDetail extends OrderSummary {
 }
 
 export interface OrderQuery {
-  readonly status?: OrderStatus
-  readonly limit?: number
-  readonly offset?: number
+  readonly status?: OrderStatus | undefined
+  readonly limit?: number | undefined
+  readonly offset?: number | undefined
 }
 
 export interface OrderPage {
@@ -221,7 +221,13 @@ export interface OrderRepository {
    * stock sin reservar.
    */
   checkout(sessionId: Id, input: CheckoutInput): Promise<OrderDetail>
-  findByNumber(orderNumber: string): Promise<OrderDetail | null>
+  /**
+   * Con `sessionId` devuelve la orden solo si pertenece a esa sesión, que es
+   * como la ve el cliente: el número de orden se dicta por WhatsApp y por
+   * teléfono, así que por sí solo no puede dar acceso a una dirección de
+   * entrega. Sin él —solo desde el panel— devuelve cualquiera.
+   */
+  findByNumber(orderNumber: string, sessionId?: Id): Promise<OrderDetail | null>
   list(query: OrderQuery): Promise<OrderPage>
   /** Transición manual desde el panel. Valida contra la máquina de estados. */
   changeStatus(orderId: Id, to: OrderStatus): Promise<OrderDetail>

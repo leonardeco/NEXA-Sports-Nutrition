@@ -187,9 +187,9 @@ export class PrismaOrderRepository implements OrderRepository {
     })
   }
 
-  async findByNumber(orderNumber: string): Promise<OrderDetail | null> {
-    const row = await this.db.order.findUnique({
-      where: { orderNumber },
+  async findByNumber(orderNumber: string, sessionId?: Id): Promise<OrderDetail | null> {
+    const row = await this.db.order.findFirst({
+      where: { orderNumber, ...(sessionId ? { sessionId } : {}) },
       include: detailInclude,
     })
     return row ? toDetail(row) : null

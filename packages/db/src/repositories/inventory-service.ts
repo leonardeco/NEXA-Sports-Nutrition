@@ -209,20 +209,24 @@ export class PrismaInventoryService implements InventoryService {
   /**
    * Comprobación de consistencia que pide ADR-0004: compara el caché con la
    * suma real del libro. Devuelve solo las variantes que no cuadran.
+   *
+   * Ojo con el SQL a mano en este esquema: `@@map` renombra la TABLA, pero
+   * las columnas conservan su nombre camelCase y hay que entrecomillarlas.
+   * `inventory_movements` tiene "variantId", no variant_id.
    */
   async findDrift(): Promise<readonly { variantId: Id; cached: number; actual: number }[]> {
     const rows = await this.db.$queryRaw<
-      { variant_id: string; cached: number; actual: number }[]
+      { variantId: string; cached: number; actual: number }[]
     >`
-      SELECT v.id AS variant_id,
+      SELECT v.id AS "variantId",
              v.stock AS cached,
              COALESCE(SUM(m.delta), 0)::int AS actual
         FROM product_variants v
-        LEFT JOIN inventory_movements m ON m.variant_id = v.id
+        LEFT JOIN inventory_movements m ON m."variantId" = v.id
        GROUP BY v.id, v.stock
       HAVING v.stock <> COALESCE(SUM(m.delta), 0)
     `
-    return rows.map((r) => ({ variantId: r.variant_id, cached: r.cached, actual: r.actual }))
+    return rows.map((r) => ({ variantId: r.variantId, cached: r.cached, actual: r.actual }))
   }
 
   /**
