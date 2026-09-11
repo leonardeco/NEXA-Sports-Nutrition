@@ -25,6 +25,11 @@ coverage/
 playwright-report/
 test-results/
 
+# Editores y herramientas locales
+.claude/
+.cursor/
+.idea/
+
 # Sistema
 .DS_Store
 Thumbs.db

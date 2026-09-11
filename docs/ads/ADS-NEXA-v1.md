@@ -243,7 +243,7 @@ nexa-sports-nutrition/
 ├─ docs/
 │  ├─ constitution.md
 │  ├─ ads/ADS-NEXA-v1.md
-│  └─ hydraia/adr/
+│  └─ adr/
 └─ pnpm-workspace.yaml
 ```
 
@@ -542,15 +542,15 @@ Verificación actual: 118 tests unitarios y 31 de integración.
 
 | ADR | Decisión |
 |---|---|
-| [0001](../hydraia/adr/0001-nextjs-fullstack-monolito-modular.md) | Next.js full-stack con dominio desacoplado, en vez de API separada |
-| [0002](../hydraia/adr/0002-postgresql-prisma-neon.md) | PostgreSQL + Prisma + Neon con branching por PR |
-| [0003](../hydraia/adr/0003-wompi-webhook-idempotente.md) | Wompi con confirmación por webhook firmado e idempotente |
-| [0004](../hydraia/adr/0004-inventario-como-libro-de-movimientos.md) | Inventario como libro de movimientos, no como contador |
-| [0005](../hydraia/adr/0005-bot-con-herramientas-de-dominio.md) | Bot con uso de herramientas sobre la base de datos, no RAG documental |
-| [0006](../hydraia/adr/0006-kubernetes-como-portabilidad.md) | Kubernetes como portabilidad, no como producción |
-| [0007](../hydraia/adr/0007-dinero-en-centavos.md) | Dinero almacenado en centavos enteros |
-| [0008](../hydraia/adr/0008-carrito-como-orden-en-borrador.md) | El carrito es una orden en `DRAFT`; no existe tabla `carts` |
-| [0009](../hydraia/adr/0009-el-importe-manda-sobre-la-firma.md) | El importe del evento se valida contra el total: Wompi no firma `reference` |
+| [0001](../adr/0001-nextjs-fullstack-monolito-modular.md) | Next.js full-stack con dominio desacoplado, en vez de API separada |
+| [0002](../adr/0002-postgresql-prisma-neon.md) | PostgreSQL + Prisma + Neon con branching por PR |
+| [0003](../adr/0003-wompi-webhook-idempotente.md) | Wompi con confirmación por webhook firmado e idempotente |
+| [0004](../adr/0004-inventario-como-libro-de-movimientos.md) | Inventario como libro de movimientos, no como contador |
+| [0005](../adr/0005-bot-con-herramientas-de-dominio.md) | Bot con uso de herramientas sobre la base de datos, no RAG documental |
+| [0006](../adr/0006-kubernetes-como-portabilidad.md) | Kubernetes como portabilidad, no como producción |
+| [0007](../adr/0007-dinero-en-centavos.md) | Dinero almacenado en centavos enteros |
+| [0008](../adr/0008-carrito-como-orden-en-borrador.md) | El carrito es una orden en `DRAFT`; no existe tabla `carts` |
+| [0009](../adr/0009-el-importe-manda-sobre-la-firma.md) | El importe del evento se valida contra el total: Wompi no firma `reference` |
 
 ---
 

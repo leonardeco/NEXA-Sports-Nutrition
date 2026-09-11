@@ -102,7 +102,7 @@ Ninguna se commitea: `.env` está en `.gitignore` y solo viaja `.env.example` co
 
 ## Cómo se cobra
 
-El flujo completo está en [ADR-0003](docs/hydraia/adr/0003-wompi-webhook-idempotente.md).
+El flujo completo está en [ADR-0003](docs/adr/0003-wompi-webhook-idempotente.md).
 Tres reglas que explican por qué el código es como es:
 
 **El redirect del navegador no confirma nada.** Wompi devuelve al cliente con un `?id=` que
@@ -114,7 +114,7 @@ parámetro acaba con órdenes marcadas como pagadas sin cobro detrás.
 transacción, pero **no la referencia**. Un evento legítimo se puede reapuntar a otra orden
 sin romper el checksum, así que antes de aplicar nada se comprueba que el importe coincida
 con el total de la orden. El porqué completo está en
-[ADR-0009](docs/hydraia/adr/0009-el-importe-manda-sobre-la-firma.md).
+[ADR-0009](docs/adr/0009-el-importe-manda-sobre-la-firma.md).
 
 **Nada queda pagado sin stock descontado.** El cambio de estado, los movimientos de
 inventario y el registro del pago se escriben en un solo `COMMIT`. Y si el webhook nunca
@@ -137,7 +137,7 @@ reescribir lógica de negocio.
 recalculan siempre desde la base de datos; ningún importe enviado por el cliente se usa
 para cobrar. El inventario no es un contador que se suma y se resta, sino un libro de
 movimientos donde cada faltante es explicable
-([ADR-0004](docs/hydraia/adr/0004-inventario-como-libro-de-movimientos.md)).
+([ADR-0004](docs/adr/0004-inventario-como-libro-de-movimientos.md)).
 
 **Los mensajes de commit no llevan emoji ni pies de atribución.** La autoría la dicen los
 campos `author` y `committer`, no un renglón al final. Hay un gancho que lo verifica; se
@@ -154,13 +154,13 @@ es Vercel con la base de datos en Neon, y Vercel no ejecuta Kubernetes. Los mani
 existen para demostrar que la aplicación es portable y como ruta de salida si algún día
 Vercel deja de encajar. CI construye la imagen Docker en cada PR para que no envejezcan
 sin uso. El razonamiento completo está en
-[ADR-0006](docs/hydraia/adr/0006-kubernetes-como-portabilidad.md).
+[ADR-0006](docs/adr/0006-kubernetes-como-portabilidad.md).
 
 ## Documentación
 
 - [Constitución](docs/constitution.md) — reglas permanentes
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
-- [Decisiones de arquitectura](docs/hydraia/adr/) — ADR-0001 a ADR-0009
+- [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0009
 
 ## Estado
 

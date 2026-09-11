@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 //  NEXA Sports Nutrition — esquema de datos
-//  Diseñado en docs/ads/ADS-NEXA-v1.md §6.3 · decisiones en docs/hydraia/adr/
+//  Diseñado en docs/ads/ADS-NEXA-v1.md §6.3 · decisiones en docs/adr/
 //
 //  Convención de dinero (ADR-0007): todo importe es un entero de CENTAVOS y
 //  lleva el sufijo `Cents`. Se usa `Int`, no `BigInt`, para que el valor
