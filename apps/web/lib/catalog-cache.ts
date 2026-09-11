@@ -17,26 +17,26 @@ export const CATALOG_REVALIDATE_SECONDS = 120
 export const getFeaturedProducts = unstable_cache(
   async (limit: number) => productRepository.listFeatured(limit),
   ["catalog-featured"],
-  { revalidate: CATALOG_REVALIDATE_SECONDS },
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
 export const getCategories = unstable_cache(
   async () => productRepository.listCategories(),
   ["catalog-categories"],
-  { revalidate: CATALOG_REVALIDATE_SECONDS },
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
 export const getBrands = unstable_cache(
   async () => productRepository.listBrands(),
   ["catalog-brands"],
-  { revalidate: CATALOG_REVALIDATE_SECONDS },
+  { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
 export function getProductSearch(query: ProductQuery) {
   return unstable_cache(
     async () => productRepository.search(query),
     ["catalog-search", JSON.stringify(query)],
-    { revalidate: CATALOG_REVALIDATE_SECONDS },
+    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
   )()
 }
 
@@ -44,6 +44,6 @@ export function getProductBySlug(slug: string) {
   return unstable_cache(
     async () => productRepository.findBySlug(slug),
     ["product", slug],
-    { revalidate: CATALOG_REVALIDATE_SECONDS },
+    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
   )()
 }

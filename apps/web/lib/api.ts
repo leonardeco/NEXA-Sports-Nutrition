@@ -1,4 +1,4 @@
-import { CartError, OrderError, firstIssue } from "@nexa/core"
+import { AdminProductError, CartError, OrderError, firstIssue } from "@nexa/core"
 import {
   CartNotFoundError,
   CheckoutError,
@@ -32,6 +32,10 @@ export function errorResponse(error: unknown): NextResponse {
     // Transición no permitida por la máquina de estados: el recurso está en
     // un estado que no admite lo que se pide, no es un error de sintaxis.
     return NextResponse.json({ error: error.message }, { status: 409 })
+  }
+  if (error instanceof AdminProductError) {
+    const status = error.message === "No encontrado" ? 404 : 409
+    return NextResponse.json({ error: error.message }, { status })
   }
 
   console.error("[api] error no controlado", error)
