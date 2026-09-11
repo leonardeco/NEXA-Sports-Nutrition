@@ -191,17 +191,29 @@ export default async function CatalogoPage({
               className="border p-10 text-center"
               style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)" }}
             >
-              <p className="font-semibold">No encontramos productos con esos filtros.</p>
-              <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-                Prueba con menos filtros o escribe solo el nombre del suplemento.
-              </p>
-              <Link
-                href="/catalogo"
-                className="mt-4 inline-block text-sm font-semibold"
-                style={{ color: "var(--color-nexa-orange)" }}
-              >
-                Ver todo el catálogo
-              </Link>
+              {categorias.length === 0 && marcas.length === 0 ? (
+                <>
+                  <p className="font-semibold">El catálogo no está conectado a la base de datos.</p>
+                  <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                    En Vercel faltan DATABASE_URL y DIRECT_URL (Neon). Después de pegarlas,
+                    haz Redeploy. Comprueba /api/health: tiene que decir db true.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">No encontramos productos con esos filtros.</p>
+                  <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                    Prueba con menos filtros o escribe solo el nombre del suplemento.
+                  </p>
+                  <Link
+                    href="/catalogo"
+                    className="mt-4 inline-block text-sm font-semibold"
+                    style={{ color: "var(--color-nexa-orange)" }}
+                  >
+                    Ver todo el catálogo
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
