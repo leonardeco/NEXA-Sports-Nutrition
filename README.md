@@ -96,6 +96,7 @@ Ninguna se commitea: `.env` está en `.gitignore` y solo viaja `.env.example` co
 | `pnpm test:e2e` | Playwright: catálogo → carrito → pedido. Necesita la app y la base |
 | `pnpm db:migrate` | Aplica migraciones en desarrollo |
 | `pnpm db:seed` | Carga el catálogo |
+| `pnpm db:embed` | Vectores Voyage del catálogo (sin clave no hace nada) |
 | `pnpm db:admin <correo> <contraseña>` | Crea o actualiza un administrador |
 | `pnpm db:studio` | Explorador de datos de Prisma |
 | `pnpm docker:up` / `docker:down` | Levanta o para PostgreSQL local |
@@ -168,7 +169,7 @@ kubectl apply -k infra/k8s
 
 - [Constitución](docs/constitution.md) — reglas permanentes
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
-- [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0009
+- [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0010
 - [Runbook de Kubernetes](docs/runbook-kubernetes.md) — cómo levantar el stack portable
 - [Runbook de Wompi sandbox](docs/runbook-wompi-sandbox.md) — cerrar F3 con un cobro de prueba
 
@@ -177,7 +178,7 @@ kubectl apply -k infra/k8s
 | Fase | Estado |
 |---|---|
 | F0 · Fundaciones | Completa |
-| F1 · Catálogo | Completa. 127 productos migrados y servidos desde PostgreSQL |
+| F1 · Catálogo | Completa. 127 productos. Búsqueda híbrida texto + pgvector (RF-03); sin `VOYAGE_API_KEY` queda solo el texto |
 | F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola. Panel: precio, stock y visibilidad sin redesplegar (RF-22) |
 | F3 · Pagos Wompi | Código completo. Falta un pago sandbox real: las llaves de `.env` no pasan `pnpm wompi:check`. Ver [runbook](docs/runbook-wompi-sandbox.md) |
 | F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |

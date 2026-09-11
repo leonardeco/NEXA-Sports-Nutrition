@@ -13,6 +13,7 @@ import {
   type CartRepository,
   type ProductRepository,
 } from "@nexa/core"
+import { embedQuery } from "@nexa/db"
 import { whatsappLink } from "./config"
 
 export interface ToolContext {
@@ -41,7 +42,8 @@ export async function executeTool(
   switch (name) {
     case "buscar_productos": {
       const { consulta } = input as { consulta: string }
-      const page = await ctx.products.search({ search: consulta, limit: 5 })
+      const vector = await embedQuery(consulta)
+      const page = await ctx.products.search({ search: consulta, limit: 5 }, vector)
       return {
         content: json({
           total: page.total,

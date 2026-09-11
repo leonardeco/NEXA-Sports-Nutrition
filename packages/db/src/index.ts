@@ -51,6 +51,7 @@ export {
 } from "./repositories/inventory-service"
 export type { PrismaLike } from "./repositories/inventory-service"
 export { hashPassword, verifyPassword } from "./admin/password"
+export { embedQuery, embedTexts, voyageConfigured } from "./embeddings/voyage"
 export { normalizeForSearch, slugify, toSku, transformCatalog } from "./legacy/transform"
 export type { LegacyProduct, CatalogSeed } from "./legacy/transform"
 export * from "../generated/client/index.js"

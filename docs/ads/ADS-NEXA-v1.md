@@ -519,8 +519,8 @@ Cada fase cierra con revisión de código y con la constitución como lista de v
 `infra/k8s` (Postgres, Job de migraciones, web, HPA, Ingress, CronJob de RF-09),
 runbook en `docs/runbook-kubernetes.md`, imágenes `nexa-web` y `nexa-migrate`, y
 `kubectl apply --dry-run=client` en CI. Kubernetes sigue siendo ruta de salida, no
-producción (ADR-0006). Falta un pago real en el sandbox de Wompi y los embeddings
-pgvector de RF-03.
+producción (ADR-0006). RF-03: búsqueda híbrida (texto + Voyage/`pgvector`); sin
+`VOYAGE_API_KEY` degrada a texto. Falta un pago real en el sandbox de Wompi.
 
 ---
 
@@ -553,6 +553,7 @@ pgvector de RF-03.
 | [0007](../adr/0007-dinero-en-centavos.md) | Dinero almacenado en centavos enteros |
 | [0008](../adr/0008-carrito-como-orden-en-borrador.md) | El carrito es una orden en `DRAFT`; no existe tabla `carts` |
 | [0009](../adr/0009-el-importe-manda-sobre-la-firma.md) | El importe del evento se valida contra el total: Wompi no firma `reference` |
+| [0010](../adr/0010-voyage-embeddings-pgvector.md) | Embeddings Voyage 1024-d + pgvector; sin clave, solo texto |
 
 ---
 

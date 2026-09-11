@@ -10,7 +10,7 @@
 
 import { unstable_cache } from "next/cache"
 import type { ProductQuery } from "@nexa/core"
-import { productRepository } from "@nexa/db"
+import { embedQuery, productRepository } from "@nexa/db"
 
 export const CATALOG_REVALIDATE_SECONDS = 120
 
@@ -34,7 +34,10 @@ export const getBrands = unstable_cache(
 
 export function getProductSearch(query: ProductQuery) {
   return unstable_cache(
-    async () => productRepository.search(query),
+    async () => {
+      const vector = query.search ? await embedQuery(query.search) : null
+      return productRepository.search(query, vector)
+    },
     ["catalog-search", JSON.stringify(query)],
     { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
   )()

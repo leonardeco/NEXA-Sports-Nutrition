@@ -10,6 +10,8 @@ import {
   Money,
   adjustmentDelta,
   pickEditableVariant,
+  reciprocalRankFusion,
+  vectorLiteral,
   type BrandRef,
   type CategoryRef,
   type ImageRef,
@@ -21,7 +23,7 @@ import {
   type Slug,
   type VariantSummary,
 } from "@nexa/core"
-import type { Prisma, PrismaClient } from "../../generated/client/index.js"
+import { Prisma, type PrismaClient } from "../../generated/client/index.js"
 import { normalizeForSearch } from "../legacy/transform"
 import { PrismaInventoryService } from "./inventory-service.js"
 
@@ -114,6 +116,22 @@ function buildWhere(query: ProductQuery): Prisma.ProductWhereInput {
   }
 
   return where
+}
+
+function sortSummaries(
+  items: ProductSummary[],
+  sort: ProductQuery["sort"],
+): ProductSummary[] {
+  if (sort === "precio-asc") {
+    return [...items].sort((a, b) => a.priceCents - b.priceCents)
+  }
+  if (sort === "precio-desc") {
+    return [...items].sort((a, b) => b.priceCents - a.priceCents)
+  }
+  if (sort === "nombre") {
+    return [...items].sort((a, b) => a.name.localeCompare(b.name, "es"))
+  }
+  return items
 }
 
 function buildOrderBy(sort: ProductQuery["sort"]): Prisma.ProductOrderByWithRelationInput[] {
@@ -259,30 +277,83 @@ export class PrismaProductRepository implements ProductRepository {
     })
   }
 
-  async search(query: ProductQuery): Promise<ProductPage> {
+  async search(
+    query: ProductQuery,
+    queryEmbedding: readonly number[] | null = null,
+  ): Promise<ProductPage> {
     const where = buildWhere(query)
     const take = Math.min(Math.max(query.limit ?? 24, 1), 100)
     const skip = Math.max(query.offset ?? 0, 0)
+    const termino = query.search ? normalizeForSearch(query.search) : ""
 
-    const [rows, total] = await Promise.all([
-      this.db.product.findMany({
-        where,
-        include: summaryInclude,
-        orderBy: buildOrderBy(query.sort),
-        take,
-        skip,
-      }),
-      this.db.product.count({ where }),
-    ])
-
-    let items = rows.map(toSummary)
-    if (query.sort === "precio-asc") {
-      items = [...items].sort((a, b) => a.priceCents - b.priceCents)
-    } else if (query.sort === "precio-desc") {
-      items = [...items].sort((a, b) => b.priceCents - a.priceCents)
+    if (!termino) {
+      const [rows, total] = await Promise.all([
+        this.db.product.findMany({
+          where,
+          include: summaryInclude,
+          orderBy: buildOrderBy(query.sort),
+          take,
+          skip,
+        }),
+        this.db.product.count({ where }),
+      ])
+      return { items: sortSummaries(rows.map(toSummary), query.sort), total }
     }
 
-    return { items, total }
+    const textRows = await this.db.product.findMany({
+      where,
+      select: { id: true },
+      orderBy: buildOrderBy(query.sort === "relevancia" ? "relevancia" : query.sort),
+      take: 50,
+    })
+    const textIds = textRows.map((row) => row.id)
+    const semanticIds = await this.semanticIds(queryEmbedding, 50)
+    const fused = reciprocalRankFusion(
+      semanticIds.length > 0 ? [textIds, semanticIds] : [textIds],
+    )
+    const pageIds = fused.slice(skip, skip + take)
+    if (pageIds.length === 0) {
+      return { items: [], total: fused.length }
+    }
+
+    const rows = await this.db.product.findMany({
+      where: { id: { in: pageIds }, isActive: true },
+      include: summaryInclude,
+    })
+    const byId = new Map(rows.map((row) => [row.id, toSummary(row)]))
+    const items = sortSummaries(
+      pageIds.map((id) => byId.get(id)).filter((item): item is ProductSummary => item !== undefined),
+      query.sort,
+    )
+    return { items, total: fused.length }
+  }
+
+  private async semanticIds(
+    queryEmbedding: readonly number[] | null,
+    limit: number,
+  ): Promise<string[]> {
+    if (!queryEmbedding || queryEmbedding.length === 0) return []
+    let literal: string
+    try {
+      literal = vectorLiteral(queryEmbedding)
+    } catch {
+      return []
+    }
+    try {
+      const rows = await this.db.$queryRaw<{ id: string }[]>`
+        SELECT pe."productId" AS id
+        FROM product_embeddings pe
+        INNER JOIN products p ON p.id = pe."productId"
+        WHERE p."isActive" = true
+          AND pe.embedding IS NOT NULL
+        ORDER BY pe.embedding <=> ${Prisma.raw(`'${literal}'::vector`)}
+        LIMIT ${limit}
+      `
+      return rows.map((row) => row.id)
+    } catch (error) {
+      console.warn("[catalog] búsqueda semántica no disponible", error)
+      return []
+    }
   }
 
   async listFeatured(limit: number): Promise<readonly ProductSummary[]> {

@@ -37,6 +37,13 @@ export {
   changedAdminProductFields,
   pickEditableVariant,
 } from "./admin-product"
+export {
+  EMBEDDING_DIMENSIONS,
+  assertEmbedding,
+  embeddingSource,
+  reciprocalRankFusion,
+  vectorLiteral,
+} from "./search"
 export { Money, MoneyError } from "./money"
 export type { Cents } from "./money"
 export {

@@ -111,7 +111,7 @@ export interface ProductRepository {
   findBySlug(slug: Slug): Promise<ProductDetail | null>
   findById(id: Id): Promise<ProductDetail | null>
   findBySlugForAdmin(slug: Slug): Promise<ProductDetail | null>
-  search(query: ProductQuery): Promise<ProductPage>
+  search(query: ProductQuery, queryEmbedding?: readonly number[] | null): Promise<ProductPage>
   listForAdmin(query: ProductQuery): Promise<ProductPage>
   listFeatured(limit: number): Promise<readonly ProductSummary[]>
   listBrands(): Promise<readonly BrandRef[]>
