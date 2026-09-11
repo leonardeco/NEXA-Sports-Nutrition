@@ -5,6 +5,8 @@ import { PrismaInventoryService } from "./repositories/inventory-service"
 import { PrismaOrderRepository } from "./repositories/order-repository"
 import { PrismaChatRepository } from "./repositories/chat-repository"
 import { PrismaProductRepository } from "./repositories/product-repository"
+import { ResilientProductRepository } from "./repositories/resilient-product-repository"
+import { StaticProductRepository } from "./repositories/static-product-repository"
 
 // En desarrollo, Next.js recarga los módulos en cada cambio. Sin este
 // singleton se abriría una conexión nueva por recarga hasta agotar el pool
@@ -47,7 +49,10 @@ export const shippingPolicy: ShippingPolicy = {
 }
 
 /** Únicos puntos de entrada al dominio desde la aplicación. */
-export const productRepository = new PrismaProductRepository(prisma)
+export const productRepository = new ResilientProductRepository(
+  databaseUrlResolved ? new PrismaProductRepository(prisma) : null,
+  new StaticProductRepository(),
+)
 export const cartRepository = new PrismaCartRepository(prisma, shippingPolicy)
 export const orderRepository = new PrismaOrderRepository(prisma, shippingPolicy)
 export const inventoryService = new PrismaInventoryService(prisma)

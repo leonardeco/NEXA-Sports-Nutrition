@@ -3,6 +3,6 @@
   "compilerOptions": {
     "noUnusedLocals": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "prisma/seed-data/productos-legacy.json"],
   "exclude": ["generated/**"]
 }
