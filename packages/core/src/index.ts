@@ -6,6 +6,7 @@ export {
   firstIssue,
   orderStatusSchema,
   setCartItemSchema,
+  updateAdminProductSchema,
 } from "./contracts"
 export {
   ASSISTANT_DISCLAIMER,
@@ -28,7 +29,9 @@ export type {
   ChangeOrderStatusInput,
   CheckoutFormInput,
   SetCartItemInput,
+  UpdateAdminProductInput,
 } from "./contracts"
+export { AdminProductError, adjustmentDelta } from "./admin-product"
 export { Money, MoneyError } from "./money"
 export type { Cents } from "./money"
 export {

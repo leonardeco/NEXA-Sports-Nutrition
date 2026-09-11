@@ -83,6 +83,9 @@ export const changeOrderStatusSchema = z.object({
   status: orderStatusSchema,
 })
 
+export { updateAdminProductSchema } from "./admin-product"
+export type { UpdateAdminProductInput } from "./admin-product"
+
 export { chatTurnSchema } from "./assistant"
 
 export type AddCartItemInput = z.infer<typeof addCartItemSchema>
