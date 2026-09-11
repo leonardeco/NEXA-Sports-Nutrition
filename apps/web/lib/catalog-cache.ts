@@ -11,42 +11,68 @@
 import { unstable_cache } from "next/cache"
 import type { ProductQuery } from "@nexa/core"
 import { embedQuery, productRepository } from "@nexa/db"
+import { log } from "./log"
+
+async function withCatalogFallback<T>(label: string, fallback: T, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch {
+    log({ event: "catalog.unavailable", level: "error", label })
+    return fallback
+  }
+}
 
 export const CATALOG_REVALIDATE_SECONDS = 120
 
-export const getFeaturedProducts = unstable_cache(
+const cachedFeatured = unstable_cache(
   async (limit: number) => productRepository.listFeatured(limit),
   ["catalog-featured"],
   { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
-export const getCategories = unstable_cache(
+const cachedCategories = unstable_cache(
   async () => productRepository.listCategories(),
   ["catalog-categories"],
   { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
-export const getBrands = unstable_cache(
+const cachedBrands = unstable_cache(
   async () => productRepository.listBrands(),
   ["catalog-brands"],
   { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
 )
 
+export function getFeaturedProducts(limit: number) {
+  return withCatalogFallback("featured", [], () => cachedFeatured(limit))
+}
+
+export function getCategories() {
+  return withCatalogFallback("categories", [], () => cachedCategories())
+}
+
+export function getBrands() {
+  return withCatalogFallback("brands", [], () => cachedBrands())
+}
+
 export function getProductSearch(query: ProductQuery) {
-  return unstable_cache(
-    async () => {
-      const vector = query.search ? await embedQuery(query.search) : null
-      return productRepository.search(query, vector)
-    },
-    ["catalog-search", JSON.stringify(query)],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
-  )()
+  return withCatalogFallback("search", { items: [], total: 0 }, () =>
+    unstable_cache(
+      async () => {
+        const vector = query.search ? await embedQuery(query.search) : null
+        return productRepository.search(query, vector)
+      },
+      ["catalog-search", JSON.stringify(query)],
+      { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
+    )(),
+  )
 }
 
 export function getProductBySlug(slug: string) {
-  return unstable_cache(
-    async () => productRepository.findBySlug(slug),
-    ["product", slug],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
-  )()
+  return withCatalogFallback("product", null, () =>
+    unstable_cache(
+      async () => productRepository.findBySlug(slug),
+      ["product", slug],
+      { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog"] },
+    )(),
+  )
 }

@@ -47,6 +47,18 @@ Opcionales (sin ellas la tienda sigue, RNF-03):
 `NEXT_PUBLIC_*` se inyectan en el build: si cambias `NEXT_PUBLIC_SITE_URL` o
 la clave pública de Wompi, hay que **redesplegar**.
 
+## Si ves `Application error` / digest en la home
+
+La app está arriba (`/api/alive` → `{ ok: true }`) pero **no hay Postgres**.
+Comprueba `https://<proyecto>.vercel.app/api/health`:
+
+- `{ "ok": false, "db": false }` → faltan o están mal `DATABASE_URL` / `DIRECT_URL`
+  en Vercel (Settings → Environment Variables). Borrar el repo de GitHub **no**
+  borra Neon: el proyecto `ep-…` de us-east-2 sigue vivo. Copia las mismas
+  cadenas del dashboard de Neon (pooled → `DATABASE_URL`, direct → `DIRECT_URL`)
+  a Production **y** Preview, y **Redeploy**.
+- `{ "ok": true, "db": true }` → la base responde; el error es otro.
+
 ## Después del primer deploy
 
 Desde tu máquina, contra Neon (no hace falta Vercel CLI):
