@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-//  Carga del catálogo migrado desde LEOFIT — ADS §7.3
+//  Carga del catálogo NEXA — precios alineados al listado vigente
 //
 //  Idempotente: se puede correr las veces que haga falta. La lógica de
 //  transformación vive en src/legacy/transform.ts y está cubierta por tests;
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
             variantId: variant.id,
             delta: p.variant.initialStock,
             reason: "RESTOCK",
-            note: "Stock inicial migrado desde LEOFIT",
+            note: "Stock inicial NEXA",
           },
         }),
         prisma.productVariant.update({

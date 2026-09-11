@@ -53,6 +53,13 @@ export default function ContactoPage() {
         </a>
       </div>
 
+      <p className="mt-8 text-sm">
+        <a href="/catalogo-nexa.pdf" className="font-medium underline" style={{ color: "var(--color-nexa-orange)" }}>
+          Descargar catálogo NEXA (PDF)
+        </a>
+        . Precios vigentes, marca NEXA.
+      </p>
+
       <section className="mt-12">
         <h2 className="text-2xl font-bold">Envíos</h2>
         <p className="mt-2 max-w-[58ch]" style={{ color: "var(--text-secondary)" }}>

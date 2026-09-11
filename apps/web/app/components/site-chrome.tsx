@@ -93,6 +93,11 @@ export function SiteFooter() {
                 {STORE.email}
               </a>
             </li>
+            <li>
+              <a href="/catalogo-nexa.pdf" className="hover:text-white">
+                Catálogo PDF NEXA
+              </a>
+            </li>
           </ul>
         </div>
       </div>
