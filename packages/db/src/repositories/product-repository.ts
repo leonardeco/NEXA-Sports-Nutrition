@@ -25,7 +25,7 @@ import {
 } from "@nexa/core"
 import { Prisma, type PrismaClient } from "../../generated/client/index.js"
 import { normalizeForSearch } from "../legacy/transform"
-import { PrismaInventoryService } from "./inventory-service.js"
+import { PrismaInventoryService } from "./inventory-service"
 
 const summaryInclude = {
   brand: true,
