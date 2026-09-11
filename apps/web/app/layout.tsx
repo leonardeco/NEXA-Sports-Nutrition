@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google"
+import { SalesAdvisor } from "./components/sales-advisor"
 import { SiteFooter, SiteHeader, WhatsAppFloating } from "./components/site-chrome"
 import "./globals.css"
 
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <div className="flex-1">{children}</div>
         <SiteFooter />
+        <SalesAdvisor />
         <WhatsAppFloating />
       </body>
     </html>

@@ -3,6 +3,7 @@ import { PrismaClient } from "../generated/client/index.js"
 import { PrismaCartRepository } from "./repositories/cart-repository"
 import { PrismaInventoryService } from "./repositories/inventory-service"
 import { PrismaOrderRepository } from "./repositories/order-repository"
+import { PrismaChatRepository } from "./repositories/chat-repository"
 import { PrismaProductRepository } from "./repositories/product-repository"
 
 // En desarrollo, Next.js recarga los módulos en cada cambio. Sin este
@@ -33,7 +34,9 @@ export const productRepository = new PrismaProductRepository(prisma)
 export const cartRepository = new PrismaCartRepository(prisma, shippingPolicy)
 export const orderRepository = new PrismaOrderRepository(prisma, shippingPolicy)
 export const inventoryService = new PrismaInventoryService(prisma)
+export const chatRepository = new PrismaChatRepository(prisma)
 
+export { PrismaChatRepository } from "./repositories/chat-repository"
 export { PrismaProductRepository }
 export { CartNotFoundError, PrismaCartRepository, newOrderNumber } from "./repositories/cart-repository"
 export {

@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.62.0",
     "@nexa/core": "workspace:*",
     "@nexa/db": "workspace:*",
     "@nexa/ui": "workspace:*",

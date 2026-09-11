@@ -2,10 +2,27 @@ export {
   addCartItemSchema,
   changeOrderStatusSchema,
   checkoutSchema,
+  chatTurnSchema,
   firstIssue,
   orderStatusSchema,
   setCartItemSchema,
 } from "./contracts"
+export {
+  ASSISTANT_DISCLAIMER,
+  ASSISTANT_MAX_USER_MESSAGES,
+  ASSISTANT_SYSTEM_PROMPT,
+  ASSISTANT_TOKEN_BUDGET,
+  ASSISTANT_TOOL_DEFINITIONS,
+  AssistantError,
+  TOOL_NAMES,
+  assertSessionAcceptsTurn,
+  parseToolInput,
+  productCardForTool,
+  requiresHumanEscalation,
+  sessionIsOpen,
+  sessionOverBudget,
+} from "./assistant"
+export type { AssistantBudget, ToolName } from "./assistant"
 export type {
   AddCartItemInput,
   ChangeOrderStatusInput,
@@ -64,6 +81,10 @@ export type {
   CartMutation,
   CartRepository,
   CategoryRef,
+  ChatRepository,
+  ChatRole,
+  ChatSessionRecord,
+  ChatTurn,
   CheckoutInput,
   ExpiryReport,
   Id,

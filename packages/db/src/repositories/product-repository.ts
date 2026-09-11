@@ -137,6 +137,14 @@ export class PrismaProductRepository implements ProductRepository {
     return row ? toDetail(row) : null
   }
 
+  async findById(id: string): Promise<ProductDetail | null> {
+    const row = await this.db.product.findFirst({
+      where: { id, isActive: true },
+      include: summaryInclude,
+    })
+    return row ? toDetail(row) : null
+  }
+
   async search(query: ProductQuery): Promise<ProductPage> {
     const where = buildWhere(query)
     const take = Math.min(Math.max(query.limit ?? 24, 1), 100)

@@ -108,6 +108,7 @@ export interface ProductPage {
 /** Lectura del catálogo. Implementado por packages/db. */
 export interface ProductRepository {
   findBySlug(slug: Slug): Promise<ProductDetail | null>
+  findById(id: Id): Promise<ProductDetail | null>
   search(query: ProductQuery): Promise<ProductPage>
   listFeatured(limit: number): Promise<readonly ProductSummary[]>
   listBrands(): Promise<readonly BrandRef[]>
@@ -319,4 +320,32 @@ export interface PaymentGateway {
   verifyEvent(body: unknown): { transaction: PaymentStatus; eventId: string } | null
   /** Reconciliación (RF-15): el estado real cuando el webhook no llegó. */
   fetchById(transactionId: string): Promise<PaymentStatus | null>
+}
+
+// ══════════════════════════════════════════════════════════════ ASISTENTE ══
+
+export type ChatRole = "user" | "assistant" | "tool"
+
+export interface ChatTurn {
+  readonly role: ChatRole
+  readonly content: string
+  readonly toolCalls?: unknown
+}
+
+export interface ChatSessionRecord {
+  readonly id: Id
+  readonly anonId: Id
+  readonly messageCount: number
+  readonly tokenBudgetUsed: number
+  readonly endedAt: Date | null
+  readonly escalatedToHuman: boolean
+}
+
+/** Persistencia de conversaciones (RF-20). Implementado por packages/db. */
+export interface ChatRepository {
+  findOrCreate(anonId: Id): Promise<ChatSessionRecord>
+  listMessages(sessionId: Id): Promise<readonly ChatTurn[]>
+  append(sessionId: Id, turn: ChatTurn, tokensUsed?: number): Promise<ChatSessionRecord>
+  escalate(sessionId: Id): Promise<ChatSessionRecord>
+  close(sessionId: Id): Promise<ChatSessionRecord>
 }

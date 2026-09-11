@@ -83,6 +83,8 @@ export const changeOrderStatusSchema = z.object({
   status: orderStatusSchema,
 })
 
+export { chatTurnSchema } from "./assistant"
+
 export type AddCartItemInput = z.infer<typeof addCartItemSchema>
 export type SetCartItemInput = z.infer<typeof setCartItemSchema>
 export type CheckoutFormInput = z.infer<typeof checkoutSchema>
