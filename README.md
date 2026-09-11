@@ -178,7 +178,7 @@ kubectl apply -k infra/k8s
 |---|---|
 | F0 · Fundaciones | Completa |
 | F1 · Catálogo | Completa. 127 productos migrados y servidos desde PostgreSQL |
-| F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola |
+| F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola. Panel: precio, stock y visibilidad sin redesplegar (RF-22) |
 | F3 · Pagos Wompi | Código completo. Falta un pago sandbox real: las llaves de `.env` no pasan `pnpm wompi:check`. Ver [runbook](docs/runbook-wompi-sandbox.md) |
 | F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |
 | F5 · Endurecimiento | Completa. CSP, logs con `order_number`, jsx-a11y, E2E catálogo→pedido, Lighthouse en CI |

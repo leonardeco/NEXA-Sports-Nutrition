@@ -1,14 +1,16 @@
 "use client"
 
-import { Money, firstIssue, updateAdminProductSchema, type ProductDetail } from "@nexa/core"
+import { Money, changedAdminProductFields, type ProductDetail } from "@nexa/core"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export function AdminProductForm({ product }: { product: ProductDetail }) {
   const router = useRouter()
   const defaultVariant = product.variants.find((item) => item.isDefault) ?? product.variants[0]
-  const [priceCop, setPriceCop] = useState(Money.toCOP(product.priceCents))
-  const [stock, setStock] = useState(product.stock)
+  const initialPriceCop = Money.toCOP(product.priceCents)
+  const initialStock = defaultVariant?.stock ?? product.stock
+  const [priceCop, setPriceCop] = useState(String(initialPriceCop))
+  const [stock, setStock] = useState(String(initialStock))
   const [isActive, setIsActive] = useState(product.isActive)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState(false)
@@ -18,9 +20,19 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
     event.preventDefault()
     setError(null)
     setOk(false)
-    const parsed = updateAdminProductSchema.safeParse({ priceCop, stock, isActive })
-    if (!parsed.success) {
-      setError(firstIssue(parsed.error))
+
+    const nextPrice = priceCop.trim() === "" ? Number.NaN : Number(priceCop)
+    const nextStock = stock.trim() === "" ? Number.NaN : Number(stock)
+    const parsed = changedAdminProductFields({
+      priceCop: nextPrice,
+      stock: nextStock,
+      isActive,
+      initialPriceCop,
+      initialStock,
+      initialActive: product.isActive,
+    })
+    if (!parsed.ok) {
+      setError(parsed.error)
       return
     }
     setPending(true)
@@ -49,7 +61,7 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 max-w-md space-y-5">
+    <form onSubmit={submit} className="mt-8 max-w-md space-y-5" aria-busy={pending}>
       {error && (
         <p role="alert" className="text-sm" style={{ color: "var(--color-nexa-danger)" }}>
           {error}
@@ -62,7 +74,7 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
       )}
 
       <div>
-        <label htmlFor="priceCop" className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <label htmlFor="priceCop" className="text-sm" style={{ color: "var(--text-secondary)" }}>
           Precio (COP)
         </label>
         <input
@@ -72,14 +84,14 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
           min={0}
           step={1}
           value={priceCop}
-          onChange={(event) => setPriceCop(Number(event.target.value))}
-          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm tabular-nums"
-          style={{ borderColor: "var(--border-subtle)" }}
+          onChange={(event) => setPriceCop(event.target.value)}
+          className="mt-1 w-full border px-3 py-2.5 text-sm tabular-nums"
+          style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)", color: "var(--text-primary)" }}
         />
       </div>
 
       <div>
-        <label htmlFor="stock" className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <label htmlFor="stock" className="text-sm" style={{ color: "var(--text-secondary)" }}>
           Stock disponible
         </label>
         <input
@@ -89,9 +101,9 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
           min={0}
           step={1}
           value={stock}
-          onChange={(event) => setStock(Number(event.target.value))}
-          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm tabular-nums"
-          style={{ borderColor: "var(--border-subtle)" }}
+          onChange={(event) => setStock(event.target.value)}
+          className="mt-1 w-full border px-3 py-2.5 text-sm tabular-nums"
+          style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)", color: "var(--text-primary)" }}
         />
       </div>
 
@@ -113,7 +125,7 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
         type="submit"
         disabled={pending}
         className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase disabled:opacity-50"
-        style={{ background: "var(--color-nexa-orange)" }}
+        style={{ background: "var(--color-nexa-navy-deep)" }}
       >
         {pending ? "Guardando…" : "Guardar"}
       </button>

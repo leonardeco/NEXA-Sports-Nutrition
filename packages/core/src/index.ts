@@ -31,7 +31,12 @@ export type {
   SetCartItemInput,
   UpdateAdminProductInput,
 } from "./contracts"
-export { AdminProductError, adjustmentDelta, pickEditableVariant } from "./admin-product"
+export {
+  AdminProductError,
+  adjustmentDelta,
+  changedAdminProductFields,
+  pickEditableVariant,
+} from "./admin-product"
 export { Money, MoneyError } from "./money"
 export type { Cents } from "./money"
 export {

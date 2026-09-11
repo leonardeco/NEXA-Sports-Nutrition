@@ -23,7 +23,7 @@ export default async function AdminProductoPage({ params }: { params: Params }) 
       <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
         {product.brand.name}
       </p>
-      <AdminProductForm product={product} />
+      <AdminProductForm key={product.id} product={product} />
     </main>
   )
 }

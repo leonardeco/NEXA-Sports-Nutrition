@@ -216,7 +216,13 @@ export class PrismaProductRepository implements ProductRepository {
       }
 
       if (input.stock !== undefined) {
-        const current = await inventory.availableStock(variant.id)
+        const locked = await tx.$queryRaw<{ stock: number }[]>`
+          SELECT stock FROM product_variants WHERE id = ${variant.id} FOR UPDATE
+        `
+        const current = locked[0]?.stock
+        if (current === undefined) {
+          throw new AdminProductError("Este producto no tiene variante para editar")
+        }
         const delta = adjustmentDelta(current, input.stock)
         if (delta !== 0) {
           await inventory.record(variant.id, delta, "ADJUSTMENT", "Ajuste desde el panel")

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { adjustmentDelta, pickEditableVariant, updateAdminProductSchema } from "./admin-product"
+import {
+  adjustmentDelta,
+  changedAdminProductFields,
+  pickEditableVariant,
+  updateAdminProductSchema,
+} from "./admin-product"
 import { Money } from "./money"
 
 describe("updateAdminProductSchema", () => {
@@ -41,6 +46,27 @@ describe("adjustmentDelta", () => {
 
   it("lanza si el stock deseado es negativo", () => {
     expect(() => adjustmentDelta(5, -1)).toThrow(/no puede ser negativo/)
+  })
+})
+
+describe("changedAdminProductFields", () => {
+  const base = {
+    priceCop: 185000,
+    stock: 19,
+    isActive: true,
+    initialPriceCop: 185000,
+    initialStock: 19,
+    initialActive: true,
+  }
+
+  it("omite stock si solo cambia el precio", () => {
+    const result = changedAdminProductFields({ ...base, priceCop: 190000 })
+    expect(result).toEqual({ ok: true, data: { priceCop: 190000 } })
+  })
+
+  it("rechaza un envío sin cambios", () => {
+    const result = changedAdminProductFields(base)
+    expect(result.ok).toBe(false)
   })
 })
 

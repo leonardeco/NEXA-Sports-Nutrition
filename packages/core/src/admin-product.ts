@@ -29,6 +29,30 @@ export const updateAdminProductSchema = z
 
 export type UpdateAdminProductInput = z.infer<typeof updateAdminProductSchema>
 
+/** Only fields the operator actually changed. Omitting stock avoids restoring a reservation. */
+export function changedAdminProductFields(input: {
+  readonly priceCop: number
+  readonly stock: number
+  readonly isActive: boolean
+  readonly initialPriceCop: number
+  readonly initialStock: number
+  readonly initialActive: boolean
+}): { ok: true; data: UpdateAdminProductInput } | { ok: false; error: string } {
+  const patch: {
+    priceCop?: number
+    stock?: number
+    isActive?: boolean
+  } = {}
+  if (input.priceCop !== input.initialPriceCop) patch.priceCop = input.priceCop
+  if (input.stock !== input.initialStock) patch.stock = input.stock
+  if (input.isActive !== input.initialActive) patch.isActive = input.isActive
+  const parsed = updateAdminProductSchema.safeParse(patch)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Los datos enviados no son válidos" }
+  }
+  return { ok: true, data: parsed.data }
+}
+
 export function adjustmentDelta(current: number, desired: number): number {
   if (!Number.isInteger(current) || !Number.isInteger(desired)) {
     throw new AdminProductError("El stock debe ser un entero")

@@ -34,7 +34,7 @@ export default async function AdminProductosPage({ searchParams }: { searchParam
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm" aria-label="Productos del catálogo">
             <thead>
               <tr
                 className="border-b text-xs tracking-wide uppercase"
@@ -67,7 +67,6 @@ export default async function AdminProductosPage({ searchParams }: { searchParam
                   <td className="py-3 pr-4 text-right tabular-nums">{product.stock}</td>
                   <td
                     className="py-3 text-right font-semibold tabular-nums"
-                    style={{ color: "var(--color-nexa-orange)" }}
                   >
                     {Money.format(product.priceCents)}
                   </td>
