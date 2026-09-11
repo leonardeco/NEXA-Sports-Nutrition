@@ -1,6 +1,7 @@
 import { orderRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
 import { errorResponse } from "@/lib/api"
+import { log } from "@/lib/log"
 import { wompiGateway } from "@/lib/wompi"
 
 export const dynamic = "force-dynamic"
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic"
 async function handle(request: Request): Promise<NextResponse> {
   const secret = process.env.CRON_SECRET
   if (!secret) {
-    console.error("[cron] CRON_SECRET no está configurado; no se expira nada")
+    log({ event: "cron.unconfigured", level: "error" })
     return NextResponse.json({ error: "No disponible" }, { status: 503 })
   }
   if (request.headers.get("authorization") !== `Bearer ${secret}`) {
@@ -33,9 +34,13 @@ async function handle(request: Request): Promise<NextResponse> {
     const gateway = wompiGateway()
     const reconcile = gateway ? gateway.reconcile.bind(gateway) : undefined
 
-    // Las cuentas van en la respuesta, que es lo que lee quien monitorea;
-    // no hace falta además una línea de log por cada pasada en vacío.
-    return NextResponse.json(await orderRepository.expireStale(new Date(), reconcile))
+    const report = await orderRepository.expireStale(new Date(), reconcile)
+    log({
+      event: "cron.expire-orders",
+      expired: report.expired,
+      reconciled: report.reconciled,
+    })
+    return NextResponse.json(report)
   } catch (error) {
     return errorResponse(error)
   }

@@ -24,6 +24,7 @@ coverage/
 .codegraph/
 playwright-report/
 test-results/
+.lighthouseci/
 
 # Editores y herramientas locales
 .claude/

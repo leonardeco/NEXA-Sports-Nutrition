@@ -93,6 +93,7 @@ Ninguna se commitea: `.env` está en `.gitignore` y solo viaja `.env.example` co
 | `pnpm typecheck` | TypeScript en los cuatro paquetes |
 | `pnpm test` | Tests unitarios. No necesitan base de datos |
 | `pnpm test:integration` | Tests contra PostgreSQL real. Mueven stock y lo dejan como estaba |
+| `pnpm test:e2e` | Playwright: catálogo → carrito → pedido. Necesita la app y la base |
 | `pnpm db:migrate` | Aplica migraciones en desarrollo |
 | `pnpm db:seed` | Carga el catálogo |
 | `pnpm db:admin <correo> <contraseña>` | Crea o actualiza un administrador |
@@ -171,10 +172,10 @@ sin uso. El razonamiento completo está en
 | F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola |
 | F3 · Pagos Wompi | Código completo y probado con eventos firmados. Falta un pago real en el sandbox de Wompi, que ADR-0003 exige antes de producción |
 | F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |
-| F5 · Endurecimiento | Pendiente |
+| F5 · Endurecimiento | Completa. CSP, logs con `order_number`, jsx-a11y, E2E catálogo→pedido, Lighthouse en CI |
 | F6 · Portabilidad | Pendiente |
 
-Verificación actual: 131 tests unitarios, 31 de integración contra PostgreSQL.
+Verificación actual: 133 tests unitarios, 31 de integración contra PostgreSQL, E2E de catálogo a pedido.
 
 **Desviación conocida:** el proyecto de Neon corre PostgreSQL 16.15, no 17 como exige el
 principio 1 de la constitución. Neon no actualiza la versión mayor en sitio, así que la

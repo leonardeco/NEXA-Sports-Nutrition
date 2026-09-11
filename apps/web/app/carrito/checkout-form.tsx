@@ -108,8 +108,8 @@ export function CheckoutForm({ blocked }: { blocked: boolean }) {
       </button>
 
       <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Al confirmar reservamos tu stock durante 30 minutos. El pago en línea con Wompi
-        llega en la siguiente fase; por ahora coordinamos el cobro por WhatsApp.
+        Al confirmar reservamos tu stock durante 30 minutos. En la siguiente pantalla
+        pagas con Wompi o coordinas el cobro por WhatsApp.
       </p>
     </form>
   )

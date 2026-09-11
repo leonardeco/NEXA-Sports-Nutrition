@@ -2,6 +2,7 @@ import { checkoutSchema } from "@nexa/core"
 import { orderRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
 import { errorResponse, invalidRequest, readJson } from "@/lib/api"
+import { log } from "@/lib/log"
 import { readSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -15,9 +16,8 @@ export const dynamic = "force-dynamic"
  * que no exista un instante con la orden pendiente y el stock sin apartar
  * (RNF-05).
  *
- * F3 añadirá a esta respuesta la firma de integridad de Wompi. Por ahora
- * devuelve la orden ya reservada, que es lo que necesita la página de
- * confirmación y el traspaso a WhatsApp (RF-16).
+ * La firma de Wompi se arma en la página de la orden, no aquí: este
+ * handler solo crea la orden reservada (RF-16).
  */
 export async function POST(request: Request) {
   const sessionId = await readSession()
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 
   try {
     const order = await orderRepository.checkout(sessionId, parsed.data)
+    log({ event: "checkout.created", order_number: order.orderNumber, status: order.status })
     return NextResponse.json({ order }, { status: 201 })
   } catch (error) {
     return errorResponse(error)

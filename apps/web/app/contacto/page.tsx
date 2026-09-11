@@ -64,8 +64,8 @@ export default function ContactoPage() {
       <section className="mt-10">
         <h2 className="text-2xl font-bold">Pagos</h2>
         <p className="mt-2 max-w-[58ch]" style={{ color: "var(--text-secondary)" }}>
-          Por ahora el pago se coordina por WhatsApp. El pago en línea con PSE, Nequi,
-          tarjeta y Bancolombia entra en funcionamiento en la siguiente fase.
+          Pagas en línea con Wompi (PSE, Nequi, tarjeta o Bancolombia) o coordinas el
+          cobro por WhatsApp si lo prefieres.
         </p>
       </section>
     </main>

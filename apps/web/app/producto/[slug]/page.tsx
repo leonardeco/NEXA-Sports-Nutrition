@@ -3,8 +3,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Money } from "@nexa/core"
-import { productRepository } from "@nexa/db"
 import { AddToCart } from "@/app/components/add-to-cart"
+import { getProductBySlug } from "@/lib/catalog-cache"
 import { STORE, whatsappLink } from "@/lib/config"
 
 export const dynamic = "force-dynamic"
@@ -13,7 +13,7 @@ type Params = Promise<{ slug: string }>
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params
-  const product = await productRepository.findBySlug(slug)
+  const product = await getProductBySlug(slug)
   if (!product) return { title: "Producto no encontrado" }
 
   return {
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ProductoPage({ params }: { params: Params }) {
   const { slug } = await params
-  const product = await productRepository.findBySlug(slug)
+  const product = await getProductBySlug(slug)
   if (!product) notFound()
 
   // El catálogo migrado da una variante por producto; la por defecto va
@@ -47,8 +47,10 @@ export default async function ProductoPage({ params }: { params: Params }) {
     brand: { "@type": "Brand", name: product.brand.name },
     sku: product.variants[0]?.sku,
     image: product.images.map((i) => i.url),
+    url: `/producto/${product.slug}`,
     offers: {
       "@type": "Offer",
+      url: `/producto/${product.slug}`,
       price: Money.toCOP(product.priceCents),
       priceCurrency: "COP",
       availability: agotado
@@ -148,8 +150,7 @@ export default async function ProductoPage({ params }: { params: Params }) {
           </div>
 
           <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
-            El pago en línea con Wompi llega en la siguiente fase. Puedes armar tu pedido
-            aquí y cerrarlo por WhatsApp al {STORE.whatsappDisplay}.
+            Pagas en línea con Wompi o cierras el pedido por WhatsApp al {STORE.whatsappDisplay}.
           </p>
 
           {product.description && (

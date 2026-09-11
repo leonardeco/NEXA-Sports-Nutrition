@@ -28,13 +28,29 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  // Cabeceras base. La CSP estricta llega en F5 (RNF-04), cuando ya se sabe
-  // qué orígenes necesitan Wompi y el asistente.
   async headers() {
+    // RNF-04. `unsafe-inline` en script/style es el mínimo con el que Next 15
+    // hidrata; no se abre connect-src ni form-action más de lo que Wompi y
+    // WhatsApp necesitan. El asistente vive en el servidor: Anthropic no
+    // aparece aquí.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "form-action 'self' https://checkout.wompi.co",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "object-src 'none'",
+    ].join("; ")
+
     return [
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy", value: csp },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

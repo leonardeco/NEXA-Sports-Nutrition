@@ -3,6 +3,7 @@ import { cartRepository, chatRepository, productRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
 import { errorResponse, invalidRequest, readJson } from "@/lib/api"
 import { AssistantConfigError, handleAssistantTurn } from "@/lib/assistant"
+import { log } from "@/lib/log"
 import { requireSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       carts: cartRepository,
       chats: chatRepository,
     })
+    log({ event: "chat.turn", escalated: reply.escalated, cartChanged: reply.cartChanged })
     return NextResponse.json(reply)
   } catch (error) {
     if (error instanceof AssistantConfigError) {

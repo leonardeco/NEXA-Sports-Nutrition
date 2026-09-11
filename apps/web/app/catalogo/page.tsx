@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Money, type ProductQuery, type ProductSort } from "@nexa/core"
-import { productRepository } from "@nexa/db"
+import { getBrands, getCategories, getProductSearch } from "@/lib/catalog-cache"
 import { PRICE_RANGES, SORT_OPTIONS } from "@/lib/config"
 import { ProductCard } from "../components/product-card"
 
@@ -71,9 +71,9 @@ export default async function CatalogoPage({
   }
 
   const [{ items, total }, categorias, marcas] = await Promise.all([
-    productRepository.search(query),
-    productRepository.listCategories(),
-    productRepository.listBrands(),
+    getProductSearch(query),
+    getCategories(),
+    getBrands(),
   ])
 
   const totalPaginas = Math.max(Math.ceil(total / PAGE_SIZE), 1)
@@ -272,7 +272,7 @@ function FilterLink({
   return (
     <Link
       href={href}
-      aria-current={active ? "true" : undefined}
+      aria-current={active ? "page" : undefined}
       className="border-l-2 py-1.5 pl-2.5 text-sm transition-colors"
       style={{
         borderColor: active ? "var(--color-nexa-orange)" : "transparent",

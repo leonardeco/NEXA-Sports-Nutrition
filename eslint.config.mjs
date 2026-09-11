@@ -1,4 +1,5 @@
 import js from "@eslint/js"
+import jsxA11y from "eslint-plugin-jsx-a11y"
 import tseslint from "typescript-eslint"
 import globals from "globals"
 
@@ -13,6 +14,9 @@ export default tseslint.config(
       "packages/db/prisma/migrations/**",
       // Lo genera Next en cada build y usa referencias triple-slash.
       "**/next-env.d.ts",
+      "playwright-report/**",
+      "test-results/**",
+      ".lighthouseci/**",
     ],
   },
 
@@ -82,5 +86,10 @@ export default tseslint.config(
   {
     files: ["apps/web/**/*.{ts,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+
+  {
+    ...jsxA11y.flatConfigs.recommended,
+    files: ["apps/web/**/*.tsx"],
   },
 )

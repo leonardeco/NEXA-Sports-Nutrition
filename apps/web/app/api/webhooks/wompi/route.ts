@@ -1,6 +1,7 @@
 import { PaymentError } from "@nexa/core"
 import { OrderNotFoundError, orderRepository, prisma } from "@nexa/db"
 import { NextResponse } from "next/server"
+import { log } from "@/lib/log"
 import { wompiGateway } from "@/lib/wompi"
 
 export const dynamic = "force-dynamic"
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic"
 export async function POST(request: Request) {
   const gateway = wompiGateway()
   if (!gateway) {
-    console.error("[wompi] la pasarela no está configurada; se descarta el evento")
+    log({ event: "wompi.unconfigured", level: "error" })
     return NextResponse.json({ error: "No disponible" }, { status: 503 })
   }
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   // RF-12 · evento sin firma válida: 401, se descarta y no se registra nada.
   const verified = gateway.verifyEvent(body)
   if (!verified) {
-    console.warn("[wompi] evento con firma inválida descartado")
+    log({ event: "wompi.invalid_signature", level: "warn" })
     return NextResponse.json({ error: "Firma inválida" }, { status: 401 })
   }
 
@@ -80,6 +81,13 @@ export async function POST(request: Request) {
       data: { status: "PROCESSED", processedAt: new Date(), error: null },
     })
 
+    log({
+      event: "wompi.processed",
+      order_number: order.orderNumber,
+      event_id: eventId,
+      status: order.status,
+    })
+
     return NextResponse.json({ ok: true, order: order.orderNumber, status: order.status })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -90,9 +98,13 @@ export async function POST(request: Request) {
     // Un fallo de base de datos, en cambio, sí merece que insista.
     const permanente = error instanceof PaymentError || error instanceof OrderNotFoundError
 
-    console.error(
-      `[wompi] evento ${eventId} ${permanente ? "rechazado" : "falló"}: ${message}`,
-    )
+    log({
+      event: permanente ? "wompi.rejected" : "wompi.failed",
+      level: permanente ? "warn" : "error",
+      order_number: transaction.reference,
+      event_id: eventId,
+      reason: message,
+    })
     await prisma.webhookEvent.update({
       where: { id: record.id },
       data: { status: permanente ? "REJECTED" : "FAILED", error: message.slice(0, 500) },

@@ -17,7 +17,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="ml-auto flex items-center gap-1 text-sm">
+        <nav className="ml-auto flex items-center gap-1 text-sm" aria-label="Principal">
           <Link
             href="/catalogo"
             className="rounded px-3 py-2 text-white/80 transition-colors hover:text-white"

@@ -50,6 +50,82 @@ jobs:
       - name: Build
         run: pnpm build
 
+  hardening:
+    name: E2E · Accesibilidad · Lighthouse
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: nexa
+          POSTGRES_PASSWORD: nexa
+          POSTGRES_DB: nexa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexa -d nexa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://nexa:nexa@localhost:5432/nexa?schema=public
+      DIRECT_URL: postgresql://nexa:nexa@localhost:5432/nexa?schema=public
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXA_SHIPPING_FLAT_CENTS: "1200000"
+      ADMIN_SESSION_SECRET: ci-admin-session-secret-32-chars-min
+      CRON_SECRET: ci-cron-secret
+      PLAYWRIGHT_SKIP_WEBSERVER: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Generar cliente de Prisma
+        run: pnpm db:generate
+
+      - name: Entorno para Prisma
+        run: |
+          printf 'DATABASE_URL=%s\nDIRECT_URL=%s\n' "$DATABASE_URL" "$DIRECT_URL" > .env
+
+      - name: Migrar y sembrar
+        run: |
+          pnpm db:migrate:deploy
+          pnpm db:seed
+
+      - name: Build
+        run: pnpm build
+
+      - name: Instalar Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E y Lighthouse
+        run: |
+          pnpm start > /tmp/nexa-web.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000 >/dev/null; then break; fi
+            if [ "$i" -eq 60 ]; then
+              echo "La app no respondió en :3000"
+              tail -50 /tmp/nexa-web.log
+              exit 1
+            fi
+            sleep 2
+          done
+          pnpm test:e2e
+          CHROME=$(node --input-type=module -e "import { chromium } from '@playwright/test'; console.log(chromium.executablePath())")
+          pnpm exec lhci autorun --collect.settings.chromePath="$CHROME"
+
   docker:
     name: Imagen Docker
     runs-on: ubuntu-latest

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google"
 import { SalesAdvisor } from "./components/sales-advisor"
 import { SiteFooter, SiteHeader, WhatsAppFloating } from "./components/site-chrome"
+import { SkipLink } from "./components/skip-link"
 import "./globals.css"
 
 const display = Barlow_Condensed({
@@ -54,8 +55,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es-CO" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body className="flex min-h-screen flex-col">
+        <SkipLink />
         <SiteHeader />
-        <div className="flex-1">{children}</div>
+        <div id="contenido" className="flex-1">
+          {children}
+        </div>
         <SiteFooter />
         <SalesAdvisor />
         <WhatsAppFloating />

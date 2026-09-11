@@ -1,22 +1,34 @@
 import Link from "next/link"
-import { productRepository } from "@nexa/db"
 import { STORE, whatsappLink } from "@/lib/config"
+import { getBrands, getCategories, getFeaturedProducts } from "@/lib/catalog-cache"
 import { HexBackdrop } from "./components/hex-backdrop"
 import { ProductCard } from "./components/product-card"
 
-// El catálogo se sirve desde la base en cada petición. En F5 pasa a ISR con
-// revalidación, cuando ya se midan los tiempos reales (RNF-01).
+// La página se renderiza en cada petición; las lecturas van por
+// `unstable_cache` (120 s). Así el build de CI no necesita base de datos.
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const [destacados, categorias, marcas] = await Promise.all([
-    productRepository.listFeatured(8),
-    productRepository.listCategories(),
-    productRepository.listBrands(),
+    getFeaturedProducts(8),
+    getCategories(),
+    getBrands(),
   ])
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: STORE.name,
+    description: STORE.description,
+    telephone: STORE.whatsappDisplay,
+    email: STORE.email,
+    areaServed: "CO",
+    currenciesAccepted: "COP",
+  }
 
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* ── Hero ───────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[var(--color-nexa-navy-deep)]">
         <HexBackdrop />

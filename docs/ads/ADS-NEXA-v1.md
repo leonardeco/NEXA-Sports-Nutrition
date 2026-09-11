@@ -515,12 +515,11 @@ razón principal para elegir Neon por encima de un Postgres gestionado convencio
 
 Cada fase cierra con revisión de código y con la constitución como lista de verificación.
 
-**Avance al 11 de septiembre de 2026:** F0–F3 como el 4 de septiembre. F4 completa en
-código: el asesor consulta el catálogo por herramientas, añade al carrito tras
-confirmación, escala consultas médicas a WhatsApp y registra cada turno. Sin
-`ANTHROPIC_API_KEY` la tienda sigue funcionando (RNF-03). Falta generar embeddings
-pgvector para la pata semántica de RF-03; la búsqueda por texto en español ya opera.
-Verificación actual: tests unitarios del dominio y de las herramientas, más los de F0–F3.
+**Avance al 11 de septiembre de 2026:** F0–F4 como antes. F5 completa en código: CSP,
+registro JSON con `order_number` (RNF-07), `eslint-plugin-jsx-a11y`, E2E
+catálogo → carrito → pedido y Lighthouse CI (CLS ≤ 0,1; LCP se reporta). Falta un
+pago real en el sandbox de Wompi (cierre de F3) y los embeddings pgvector de RF-03.
+Verificación actual: tests unitarios, E2E y Lighthouse en CI.
 
 ---
 
