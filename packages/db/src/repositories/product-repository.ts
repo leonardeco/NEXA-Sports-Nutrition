@@ -69,6 +69,7 @@ function toSummary(row: ProductRow): ProductSummary {
     name: row.name,
     badge: row.badge,
     isFeatured: row.isFeatured,
+    isActive: row.isActive,
     brand: toBrandRef(row.brand),
     category: { slug: row.category.slug, name: row.category.name },
     image: row.images[0] ? toImageRef(row.images[0]) : null,

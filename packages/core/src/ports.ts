@@ -69,6 +69,7 @@ export interface ProductSummary {
   name: string
   badge: string | null
   isFeatured: boolean
+  readonly isActive: boolean
   brand: BrandRef
   category: CategoryRef
   image: ImageRef | null

@@ -27,6 +27,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin" className="text-sm font-semibold tracking-[0.16em] text-white uppercase">
             Panel
           </Link>
+          <nav className="flex items-center gap-4 text-sm" aria-label="Panel">
+            <Link href="/admin" className="text-white/70 hover:text-white">
+              Órdenes
+            </Link>
+            <Link href="/admin/productos" className="text-white/70 hover:text-white">
+              Productos
+            </Link>
+          </nav>
           <Link href="/" className="ml-auto text-sm text-white/70 hover:text-white">
             Ver la tienda
           </Link>

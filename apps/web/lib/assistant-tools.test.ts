@@ -8,6 +8,7 @@ const product: ProductDetail = {
   name: "Nitro Tech 2 LBS",
   badge: null,
   isFeatured: true,
+  isActive: true,
   brand: { slug: "muscletech", name: "MuscleTech", color: null, accent: null, logoUrl: null },
   category: { slug: "proteinas", name: "Proteínas" },
   image: null,
