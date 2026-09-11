@@ -170,6 +170,7 @@ kubectl apply -k infra/k8s
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
 - [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0009
 - [Runbook de Kubernetes](docs/runbook-kubernetes.md) — cómo levantar el stack portable
+- [Runbook de Wompi sandbox](docs/runbook-wompi-sandbox.md) — cerrar F3 con un cobro de prueba
 
 ## Estado
 
@@ -178,7 +179,7 @@ kubectl apply -k infra/k8s
 | F0 · Fundaciones | Completa |
 | F1 · Catálogo | Completa. 127 productos migrados y servidos desde PostgreSQL |
 | F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola |
-| F3 · Pagos Wompi | Código completo y probado con eventos firmados. Falta un pago real en el sandbox de Wompi, que ADR-0003 exige antes de producción |
+| F3 · Pagos Wompi | Código completo. Falta un pago sandbox real: las llaves de `.env` no pasan `pnpm wompi:check`. Ver [runbook](docs/runbook-wompi-sandbox.md) |
 | F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |
 | F5 · Endurecimiento | Completa. CSP, logs con `order_number`, jsx-a11y, E2E catálogo→pedido, Lighthouse en CI |
 | F6 · Portabilidad | Completa. `kubectl apply -k infra/k8s` deja Postgres, migraciones, web, HPA, Ingress y el cron de reservas |
