@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexa-config
+  namespace: nexa
+data:
+  NEXT_PUBLIC_SITE_URL: "http://nexa.local"
+  NEXA_SHIPPING_FLAT_CENTS: "1200000"
+  WOMPI_API_URL: "https://sandbox.wompi.co/v1"
+  NEXA_BOT_MODEL: "claude-sonnet-5"
+  NEXT_PUBLIC_WHATSAPP_NUMBER: "573226993891"
+  NEXT_PUBLIC_CONTACT_EMAIL: "leonardecojt@gmail.com"

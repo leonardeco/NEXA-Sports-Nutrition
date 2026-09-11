@@ -239,7 +239,7 @@ nexa-sports-nutrition/
 │  └─ ui/                      # design system NEXA (tokens + componentes)
 ├─ infra/
 │  ├─ docker/                  # Dockerfile + docker-compose.yml
-│  └─ k8s/                     # deployment, service, ingress, secret, hpa, job
+│  └─ k8s/                     # kustomize: postgres, migrate, web, hpa, ingress, cron
 ├─ docs/
 │  ├─ constitution.md
 │  ├─ ads/ADS-NEXA-v1.md
@@ -515,11 +515,12 @@ razón principal para elegir Neon por encima de un Postgres gestionado convencio
 
 Cada fase cierra con revisión de código y con la constitución como lista de verificación.
 
-**Avance al 11 de septiembre de 2026:** F0–F4 como antes. F5 completa en código: CSP,
-registro JSON con `order_number` (RNF-07), `eslint-plugin-jsx-a11y`, E2E
-catálogo → carrito → pedido y Lighthouse CI (CLS ≤ 0,1; LCP se reporta). Falta un
-pago real en el sandbox de Wompi (cierre de F3) y los embeddings pgvector de RF-03.
-Verificación actual: tests unitarios, E2E y Lighthouse en CI.
+**Avance al 11 de septiembre de 2026:** F0–F5 como antes. F6 completa: manifiestos en
+`infra/k8s` (Postgres, Job de migraciones, web, HPA, Ingress, CronJob de RF-09),
+runbook en `docs/runbook-kubernetes.md`, imágenes `nexa-web` y `nexa-migrate`, y
+`kubectl apply --dry-run=client` en CI. Kubernetes sigue siendo ruta de salida, no
+producción (ADR-0006). Falta un pago real en el sandbox de Wompi y los embeddings
+pgvector de RF-03.
 
 ---
 

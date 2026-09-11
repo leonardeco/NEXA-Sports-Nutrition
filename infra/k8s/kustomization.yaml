@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: nexa
+    includeSelectors: false
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - postgres.yaml
+  - migrate-job.yaml
+  - web.yaml
+  - ingress.yaml
+  - cronjob-expire.yaml
+
+images:
+  - name: nexa-web
+    newName: nexa-web
+    newTag: latest
+  - name: nexa-migrate
+    newName: nexa-migrate
+    newTag: latest

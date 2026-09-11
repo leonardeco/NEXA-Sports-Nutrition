@@ -38,6 +38,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @nexa/db generate
 RUN pnpm --filter @nexa/web build
 
+# ── Migraciones (Job de Kubernetes) ──────────────────────────────────────
+# Misma capa de build: Prisma y las migraciones ya están. No hidrata Next.
+FROM builder AS migrate
+WORKDIR /app
+CMD ["pnpm", "--filter", "@nexa/db", "exec", "prisma", "migrate", "deploy"]
+
 # ── Runtime ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -47,17 +53,20 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+RUN apk add --no-cache libc6-compat openssl \
+  && addgroup -g 1001 -S nodejs \
+  && adduser -S nextjs -u 1001
 
-# `output: "standalone"` deja en .next/standalone un servidor con solo las
-# dependencias que la aplicación usa de verdad.
+# `output: "standalone"` deja un servidor con solo lo que la app usa.
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/packages/db/generated ./packages/db/generated
 
 USER nextjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s \
-  CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:3000/api/alive').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "apps/web/server.js"]

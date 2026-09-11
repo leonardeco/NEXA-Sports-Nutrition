@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nexa-migrate
+  namespace: nexa
+spec:
+  backoffLimit: 8
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-db
+          image: pgvector/pgvector:pg17
+          command:
+            - /bin/sh
+            - -c
+            - until pg_isready -h nexa-postgres -U nexa -d nexa; do sleep 2; done
+      containers:
+        - name: migrate
+          image: nexa-migrate:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexa-secret
+                  key: DATABASE_URL
+            - name: DIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexa-secret
+                  key: DIRECT_URL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

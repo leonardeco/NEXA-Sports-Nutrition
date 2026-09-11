@@ -153,15 +153,23 @@ git config core.hooksPath .githooks
 Los manifiestos de `infra/k8s` **no son el despliegue en uso**. La producción de esta fase
 es Vercel con la base de datos en Neon, y Vercel no ejecuta Kubernetes. Los manifiestos
 existen para demostrar que la aplicación es portable y como ruta de salida si algún día
-Vercel deja de encajar. CI construye la imagen Docker en cada PR para que no envejezcan
-sin uso. El razonamiento completo está en
+Vercel deja de encajar. CI construye las imágenes (web y migraciones) y corre
+`kubectl apply --dry-run=client` en cada PR. El procedimiento para levantar el stack
+está en [docs/runbook-kubernetes.md](docs/runbook-kubernetes.md). El razonamiento, en
 [ADR-0006](docs/adr/0006-kubernetes-como-portabilidad.md).
+
+```bash
+docker build -f infra/docker/Dockerfile --target runner  -t nexa-web:latest .
+docker build -f infra/docker/Dockerfile --target migrate -t nexa-migrate:latest .
+kubectl apply -k infra/k8s
+```
 
 ## Documentación
 
 - [Constitución](docs/constitution.md) — reglas permanentes
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
 - [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0009
+- [Runbook de Kubernetes](docs/runbook-kubernetes.md) — cómo levantar el stack portable
 
 ## Estado
 
@@ -173,7 +181,7 @@ sin uso. El razonamiento completo está en
 | F3 · Pagos Wompi | Código completo y probado con eventos firmados. Falta un pago real en el sandbox de Wompi, que ADR-0003 exige antes de producción |
 | F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |
 | F5 · Endurecimiento | Completa. CSP, logs con `order_number`, jsx-a11y, E2E catálogo→pedido, Lighthouse en CI |
-| F6 · Portabilidad | Pendiente |
+| F6 · Portabilidad | Completa. `kubectl apply -k infra/k8s` deja Postgres, migraciones, web, HPA, Ingress y el cron de reservas |
 
 Verificación actual: 133 tests unitarios, 31 de integración contra PostgreSQL, E2E de catálogo a pedido.
 

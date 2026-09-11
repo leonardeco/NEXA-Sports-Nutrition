@@ -19,7 +19,7 @@
     "lhci": "lhci autorun",
     "db:generate": "pnpm --filter @nexa/db generate",
     "db:migrate": "pnpm --filter @nexa/db migrate",
-    "db:migrate:deploy": "pnpm --filter @nexa/db migrate:deploy",
+    "db:migrate:deploy": "dotenv -e .env -- pnpm --filter @nexa/db migrate:deploy",
     "db:push": "pnpm --filter @nexa/db push",
     "db:seed": "pnpm --filter @nexa/db seed",
     "db:admin": "pnpm --filter @nexa/db admin",
