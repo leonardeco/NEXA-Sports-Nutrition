@@ -6,7 +6,10 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import {
+  AdminProductError,
   Money,
+  adjustmentDelta,
+  pickEditableVariant,
   type BrandRef,
   type CategoryRef,
   type ImageRef,
@@ -20,6 +23,7 @@ import {
 } from "@nexa/core"
 import type { Prisma, PrismaClient } from "../../generated/client/index.js"
 import { normalizeForSearch } from "../legacy/transform"
+import { PrismaInventoryService } from "./inventory-service.js"
 
 const summaryInclude = {
   brand: true,
@@ -143,6 +147,109 @@ export class PrismaProductRepository implements ProductRepository {
       include: summaryInclude,
     })
     return row ? toDetail(row) : null
+  }
+
+  async findBySlugForAdmin(slug: Slug): Promise<ProductDetail | null> {
+    const row = await this.db.product.findFirst({
+      where: { slug },
+      include: summaryInclude,
+    })
+    return row ? toDetail(row) : null
+  }
+
+  async listForAdmin(query: ProductQuery): Promise<ProductPage> {
+    const take = Math.min(Math.max(query.limit ?? 24, 1), 100)
+    const skip = Math.max(query.offset ?? 0, 0)
+    const termino = query.search ? normalizeForSearch(query.search) : ""
+    const where: Prisma.ProductWhereInput = {}
+    if (termino.length > 0) {
+      where.AND = termino
+        .split(" ")
+        .filter(Boolean)
+        .map((palabra) => ({ searchText: { contains: palabra } }))
+    }
+    const [rows, total] = await Promise.all([
+      this.db.product.findMany({
+        where,
+        include: summaryInclude,
+        orderBy: { name: "asc" },
+        take,
+        skip,
+      }),
+      this.db.product.count({ where }),
+    ])
+    return { items: rows.map(toSummary), total }
+  }
+
+  /**
+   * Precio, stock y visibilidad del panel, en un solo COMMIT.
+   * El stock solo se mueve por el libro (ADR-0004): nunca se escribe
+   * la columna a un valor absoluto.
+   */
+  async applyAdminProductChange(
+    slug: Slug,
+    input: { readonly priceCop?: number; readonly stock?: number; readonly isActive?: boolean },
+    actorId: string,
+  ): Promise<ProductDetail> {
+    return this.db.$transaction(async (tx) => {
+      const row = await tx.product.findFirst({
+        where: { slug },
+        include: summaryInclude,
+      })
+      if (!row) throw new AdminProductError("No encontrado")
+      const variant = pickEditableVariant(toDetail(row).variants)
+      if (!variant) throw new AdminProductError("Este producto no tiene variante para editar")
+
+      const diff: Record<string, unknown> = {}
+      const inventory = new PrismaInventoryService(tx)
+
+      if (input.priceCop !== undefined) {
+        const next = Money.fromCOP(input.priceCop)
+        if (next !== variant.priceCents) {
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { priceCents: next },
+          })
+          diff.priceCents = { from: variant.priceCents, to: next }
+        }
+      }
+
+      if (input.stock !== undefined) {
+        const current = await inventory.availableStock(variant.id)
+        const delta = adjustmentDelta(current, input.stock)
+        if (delta !== 0) {
+          await inventory.record(variant.id, delta, "ADJUSTMENT", "Ajuste desde el panel")
+          diff.stock = { from: current, to: input.stock }
+        }
+      }
+
+      if (input.isActive !== undefined && input.isActive !== row.isActive) {
+        await tx.product.update({
+          where: { id: row.id },
+          data: { isActive: input.isActive },
+        })
+        diff.isActive = { from: row.isActive, to: input.isActive }
+      }
+
+      if (Object.keys(diff).length > 0) {
+        await tx.auditLog.create({
+          data: {
+            actorId,
+            action: "update",
+            entity: "product",
+            entityId: row.id,
+            diff: diff as Prisma.InputJsonValue,
+          },
+        })
+      }
+
+      const updated = await tx.product.findFirst({
+        where: { slug },
+        include: summaryInclude,
+      })
+      if (!updated) throw new AdminProductError("No encontrado")
+      return toDetail(updated)
+    })
   }
 
   async search(query: ProductQuery): Promise<ProductPage> {

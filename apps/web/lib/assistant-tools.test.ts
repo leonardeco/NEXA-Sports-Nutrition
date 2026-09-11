@@ -45,10 +45,13 @@ function ctx(overrides: Partial<ToolContext> = {}): ToolContext {
   const products = {
     findBySlug: async (slug: string) => (slug === product.slug ? product : null),
     findById: async () => product,
+    findBySlugForAdmin: async (slug: string) => (slug === product.slug ? product : null),
     search: async () => ({ items: [product], total: 1 }),
+    listForAdmin: async () => ({ items: [product], total: 1 }),
     listFeatured: async () => [],
     listBrands: async () => [],
     listCategories: async () => [],
+    applyAdminProductChange: async () => product,
   } satisfies ProductRepository
 
   return {

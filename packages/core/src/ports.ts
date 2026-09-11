@@ -109,10 +109,21 @@ export interface ProductPage {
 export interface ProductRepository {
   findBySlug(slug: Slug): Promise<ProductDetail | null>
   findById(id: Id): Promise<ProductDetail | null>
+  findBySlugForAdmin(slug: Slug): Promise<ProductDetail | null>
   search(query: ProductQuery): Promise<ProductPage>
+  listForAdmin(query: ProductQuery): Promise<ProductPage>
   listFeatured(limit: number): Promise<readonly ProductSummary[]>
   listBrands(): Promise<readonly BrandRef[]>
   listCategories(): Promise<readonly CategoryRef[]>
+  applyAdminProductChange(
+    slug: Slug,
+    input: {
+      readonly priceCop?: number
+      readonly stock?: number
+      readonly isActive?: boolean
+    },
+    actorId: string,
+  ): Promise<ProductDetail>
 }
 
 // ════════════════════════════════════════════════════════════ INVENTARIO ══

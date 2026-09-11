@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { adjustmentDelta, updateAdminProductSchema } from "./admin-product"
+import { adjustmentDelta, pickEditableVariant, updateAdminProductSchema } from "./admin-product"
+import { Money } from "./money"
 
 describe("updateAdminProductSchema", () => {
   it("acepta pesos enteros, stock absoluto y activo", () => {
@@ -40,5 +41,19 @@ describe("adjustmentDelta", () => {
 
   it("lanza si el stock deseado es negativo", () => {
     expect(() => adjustmentDelta(5, -1)).toThrow(/no puede ser negativo/)
+  })
+})
+
+describe("pickEditableVariant", () => {
+  const a = { id: "a", sku: "A", name: "A", priceCents: Money.fromCOP(1), stock: 1, isDefault: false }
+  const b = { id: "b", sku: "B", name: "B", priceCents: Money.fromCOP(1), stock: 1, isDefault: true }
+
+  it("elige isDefault y si no, la primera", () => {
+    expect(pickEditableVariant([a, b])?.id).toBe("b")
+    expect(pickEditableVariant([a])?.id).toBe("a")
+  })
+
+  it("devuelve null si no hay variantes", () => {
+    expect(pickEditableVariant([])).toBeNull()
   })
 })

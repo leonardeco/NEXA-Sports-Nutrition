@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { VariantSummary } from "./ports"
 
 export class AdminProductError extends Error {
   constructor(message: string) {
@@ -36,4 +37,11 @@ export function adjustmentDelta(current: number, desired: number): number {
     throw new AdminProductError("El stock no puede ser negativo")
   }
   return desired - current
+}
+
+export function pickEditableVariant(
+  variants: readonly VariantSummary[],
+): VariantSummary | null {
+  if (variants.length === 0) return null
+  return variants.find((item) => item.isDefault) ?? variants[0] ?? null
 }
