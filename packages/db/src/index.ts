@@ -11,10 +11,27 @@ import { PrismaProductRepository } from "./repositories/product-repository"
 // de PostgreSQL — y en Neon, el pool es pequeño.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
+/** Neon a veces entrega `channel_binding=require`; Prisma en Vercel falla con eso. */
+function databaseUrl(): string | undefined {
+  const raw = process.env.DATABASE_URL
+  if (!raw) return undefined
+  try {
+    const parsed = new URL(raw)
+    parsed.searchParams.delete("channel_binding")
+    if (!parsed.searchParams.has("sslmode")) parsed.searchParams.set("sslmode", "require")
+    return parsed.toString()
+  } catch {
+    return raw
+  }
+}
+
+const databaseUrlResolved = databaseUrl()
+
 export const prisma: PrismaClient =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    ...(databaseUrlResolved ? { datasources: { db: { url: databaseUrlResolved } } } : {}),
   })
 
 if (process.env.NODE_ENV !== "production") {
