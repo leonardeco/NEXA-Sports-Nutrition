@@ -13,9 +13,8 @@ if (existsSync(rootEnv)) loadEnvFile({ path: rootEnv })
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
-  // Necesario para la imagen Docker y los manifiestos de K8s de F6 (ADR-0006).
-  // En Vercel es inocuo.
-  output: "standalone",
+  // Docker/K8s (ADR-0006). En Vercel el empaquetado lo hace la plataforma.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: path.join(import.meta.dirname, "../../"),
 
   // Los paquetes del workspace se publican como TypeScript sin compilar.

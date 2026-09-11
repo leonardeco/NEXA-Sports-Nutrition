@@ -172,6 +172,7 @@ kubectl apply -k infra/k8s
 - [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0010
 - [Runbook de Kubernetes](docs/runbook-kubernetes.md) — cómo levantar el stack portable
 - [Runbook de Wompi sandbox](docs/runbook-wompi-sandbox.md) — cerrar F3 con un cobro de prueba
+- [Runbook de Vercel](docs/runbook-vercel.md) — import del monorepo y variables
 
 ## Estado
 
