@@ -67,9 +67,11 @@ https://<proyecto>.vercel.app/api/webhooks/wompi
 
 ## Cron (RF-09)
 
-`vercel.json` en `apps/web` programa `GET /api/cron/expire-orders` cada 5 min.
-En el plan **Hobby** Vercel solo dispara crons **una vez al día**. Para `*/5`
-hace falta Pro. Hasta entonces se puede pegar a mano:
+El plan **Hobby** rechaza cualquier cron más de una vez al día. Por eso el
+manifiesto usa `0 6 * * *` (06:00 UTC = 01:00 en Colombia). Las reservas
+pueden quedar retenidas hasta ~24 h; en Pro se puede volver a `*/5 * * * *`.
+
+Disparo a mano:
 
 ```bash
 curl -X GET https://<proyecto>.vercel.app/api/cron/expire-orders \
