@@ -95,6 +95,7 @@ const BRAND_META: Record<string, { color: string; accent: string; order: number;
   "Angry Supplements": { color: "#1A0000", accent: "#FF4444", order: 13, logo: "/img/marcas/angry-supplements.webp" },
   "Graz Chemical": { color: "#2F4F4F", accent: "#00FFFF", order: 14, logo: null },
   Varios: { color: "#1E1E1E", accent: "#FF6B00", order: 15, logo: null },
+  "Healthy Sports": { color: "#E53935", accent: "#FFFFFF", order: 16, logo: null },
 }
 
 // Sin color propio: las categorías se pintan con la paleta NEXA, no con la
@@ -167,8 +168,8 @@ export function transformCatalog(legacy: readonly LegacyProduct[]): CatalogSeed 
     if (CATEGORY_ORDER[item.categoria] === undefined) {
       throw new MigrationError(`Categoría desconocida en el producto ${item.id}: "${item.categoria}"`)
     }
-    if (!item.imagen?.endsWith(".webp")) {
-      throw new MigrationError(`El producto ${item.id} no apunta a un .webp: "${item.imagen}"`)
+    if (!item.imagen?.match(/\.(webp|png|jpe?g)$/i)) {
+      throw new MigrationError(`El producto ${item.id} no apunta a una imagen válida: "${item.imagen}"`)
     }
 
     brandNames.add(item.marca)

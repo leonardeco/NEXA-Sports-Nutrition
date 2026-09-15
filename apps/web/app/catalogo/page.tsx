@@ -111,11 +111,19 @@ export default async function CatalogoPage({
         >
           Buscar
         </button>
+        <a
+          href="/catalogo-nexa.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-nexa-orange)] uppercase border border-[var(--color-nexa-orange)] transition-colors hover:bg-[var(--color-nexa-orange)] hover:text-white"
+        >
+          Descargar PDF
+        </a>
       </form>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[210px_minmax(0,1fr)]">
         {/* ── Filtros ──────────────────────────────────────────────── */}
-        <aside className="space-y-7">
+        <aside className="flex overflow-x-auto pb-4 gap-6 lg:block lg:space-y-7 lg:overflow-visible lg:pb-0 [scrollbar-width:none]">
           <FilterGroup title="Categoría">
             <FilterLink href={filterHref(params, { categoria: undefined })} active={!categoria}>
               Todas
@@ -260,7 +268,7 @@ export default async function CatalogoPage({
 
 function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="shrink-0 min-w-[140px] lg:min-w-0">
       <h2
         className="text-[0.68rem] font-medium tracking-[0.16em] uppercase"
         style={{ color: "var(--text-muted)" }}

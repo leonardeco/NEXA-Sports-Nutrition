@@ -53,6 +53,15 @@ export default async function Home() {
               Ver catálogo
             </Link>
             <a
+              href="/catalogo-nexa.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-[var(--color-nexa-orange)] px-6 py-3 text-sm font-semibold tracking-wide uppercase transition-colors hover:bg-[var(--color-nexa-orange)]"
+              style={{ color: "var(--color-nexa-orange)", textShadow: "0 0 10px rgba(255, 90, 31, 0.3)" }}
+            >
+              Descargar PDF
+            </a>
+            <a
               href={whatsappLink("Hola, quiero asesoría para elegir un suplemento.")}
               target="_blank"
               rel="noopener noreferrer"

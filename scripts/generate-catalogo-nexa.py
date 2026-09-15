@@ -17,6 +17,7 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
+    Image,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,20 +115,28 @@ def main() -> None:
     for cat in cats:
         rows = [
             [
+                Paragraph("Imagen", head),
                 Paragraph("Producto", head),
                 Paragraph("Marca", head),
                 Paragraph("Precio", head),
             ]
         ]
         for item in sorted(by_cat[cat], key=lambda p: p["nombre"]):
+            img_path = ROOT / "apps" / "web" / "public" / item["imagen"].lstrip("/")
+            if img_path.exists():
+                img = Image(str(img_path), width=40, height=40)
+            else:
+                img = Paragraph("", cell)
+
             rows.append(
                 [
+                    img,
                     Paragraph(item["nombre"], cell),
                     Paragraph(item["marca"], cell),
                     Paragraph(money(item["precio"]), cell),
                 ]
             )
-        table = Table(rows, colWidths=[4.2 * inch, 1.7 * inch, 1.1 * inch], repeatRows=1)
+        table = Table(rows, colWidths=[0.8 * inch, 3.4 * inch, 1.7 * inch, 1.1 * inch], repeatRows=1)
         table.setStyle(
             TableStyle(
                 [
@@ -135,7 +144,7 @@ def main() -> None:
                     ("BACKGROUND", (0, 1), (-1, -1), colors.white),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                     ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
-                    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+                    ("ALIGN", (3, 0), (3, -1), "RIGHT"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("GRID", (0, 0), (-1, -1), 0.3, LINE),
                     ("LEFTPADDING", (0, 0), (-1, -1), 6),

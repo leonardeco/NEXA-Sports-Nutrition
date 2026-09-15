@@ -85,7 +85,7 @@ export function AddToCart({
           id="cantidad"
           value={quantity}
           onChange={(event) => setQuantity(Number(event.target.value))}
-          className="border bg-white px-3 py-3 text-sm tabular-nums"
+          className="border bg-white text-black px-3 py-3 text-sm tabular-nums"
           style={{ borderColor: "var(--border-subtle)" }}
         >
           {Array.from({ length: max }, (_, i) => i + 1).map((n) => (

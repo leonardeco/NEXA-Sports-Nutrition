@@ -1336,7 +1336,7 @@
     "categoria": "Creatinas",
     "precio": 110000,
     "descripcion": "500 gramos de creatina monohidrato pura. 100 porciones de 5g para maximo rendimiento y fuerza.",
-    "imagen": "/img/productos/96-creatina-iron-500-gr.webp",
+    "imagen": "/img/productos/96-creatina-iron-500-gr.png",
     "badge": null,
     "stock": 11,
     "destacado": false,
@@ -1774,6 +1774,20 @@
     "badge": null,
     "stock": 6,
     "destacado": false,
+    "beneficios": "Aporta los nutrientes necesarios para maximizar tus resultados físicos y mantener un estilo de vida saludable.",
+    "modo_uso": "Consultar indicaciones en el envase del producto o con un asesor en nutrición."
+  },
+  {
+    "id": 128,
+    "nombre": "Creatine Monohydrate 3000",
+    "marca": "Healthy Sports",
+    "categoria": "Creatinas",
+    "precio": 125000,
+    "descripcion": "Creatina monohidratada micronizada de Healthy Sports. Mayor fuerza y rendimiento.",
+    "imagen": "/img/productos/128-creatine-monohydrate-healthy-sports.png",
+    "badge": "Nuevo",
+    "stock": 10,
+    "destacado": true,
     "beneficios": "Aporta los nutrientes necesarios para maximizar tus resultados físicos y mantener un estilo de vida saludable.",
     "modo_uso": "Consultar indicaciones en el envase del producto o con un asesor en nutrición."
   }

@@ -17,16 +17,33 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="ml-auto flex items-center gap-1 text-sm" aria-label="Principal">
+        <nav className="ml-auto flex items-center gap-1 sm:gap-2 text-sm" aria-label="Principal">
           <Link
             href="/catalogo"
-            className="rounded px-3 py-2 text-white/80 transition-colors hover:text-white"
+            className="rounded px-2 py-2 text-white/80 transition-colors hover:text-white sm:px-3"
           >
             Catálogo
           </Link>
+          <a
+            href="/catalogo-nexa.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-block rounded px-3 py-2 text-[var(--color-nexa-orange)] font-medium transition-colors hover:text-white"
+          >
+            Descargar Catálogo
+          </a>
+          <a
+            href="/catalogo-nexa.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block sm:hidden rounded px-2 py-2 text-[var(--color-nexa-orange)] font-medium transition-colors hover:text-white"
+            title="Descargar PDF"
+          >
+            PDF
+          </a>
           <Link
             href="/contacto"
-            className="rounded px-3 py-2 text-white/80 transition-colors hover:text-white"
+            className="hidden sm:inline-block rounded px-3 py-2 text-white/80 transition-colors hover:text-white"
           >
             Contacto
           </Link>

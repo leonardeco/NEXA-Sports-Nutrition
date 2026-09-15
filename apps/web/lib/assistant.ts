@@ -44,7 +44,7 @@ function client(): Anthropic {
 }
 
 function modelName(): string {
-  return process.env.NEXA_BOT_MODEL?.trim() || "claude-sonnet-4-5"
+  return process.env.NEXA_BOT_MODEL?.trim() || "claude-3-5-sonnet-20241022"
 }
 
 function asHistory(
