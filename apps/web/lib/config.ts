@@ -17,6 +17,35 @@ export const STORE = {
   city: "Colombia",
 } as const
 
+/**
+ * Campaña de portada. `null` apaga la sección. Es contenido, no código: vive
+ * aquí hasta que el panel lo gestione. La imagen va en `public/`.
+ */
+export const PROMO: {
+  image: string
+  alt: string
+  eyebrow: string
+  title: string
+  brand: string
+  copy: string
+  cta: string
+  whatsappMessage: string
+  secondaryHref?: string
+  secondaryLabel?: string
+} | null = {
+  image: "/img/banners/electron-lanzamiento.webp",
+  alt: "Electron Hydration Drink Mix de Healthy Sports, cajas de varios sabores",
+  eyebrow: "Nuevo lanzamiento",
+  title: "Electron Hydration",
+  brand: "Healthy Sports",
+  copy:
+    "Polvo de hidratación en sobres de una porción, doce por caja y en varios sabores. Muy pronto en NEXA: pregunta por él y te avisamos cuando llegue.",
+  cta: "Quiero saber más",
+  whatsappMessage: "Hola, vi el lanzamiento de Electron Hydration de Healthy Sports. ¿Cuándo llega y qué sabores tendrán?",
+  secondaryHref: "/catalogo?marca=healthy-sports",
+  secondaryLabel: "Ver Healthy Sports",
+}
+
 export function whatsappLink(message: string): string {
   return `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(message)}`
 }

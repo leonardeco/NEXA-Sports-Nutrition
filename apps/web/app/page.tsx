@@ -3,6 +3,7 @@ import { STORE, whatsappLink } from "@/lib/config"
 import { getBrands, getCategories, getFeaturedProducts } from "@/lib/catalog-cache"
 import { HexBackdrop } from "./components/hex-backdrop"
 import { ProductCard } from "./components/product-card"
+import { PromoBanner } from "./components/promo-banner"
 
 // La página se renderiza en cada petición; las lecturas van por
 // `unstable_cache` (120 s). Así el build de CI no necesita base de datos.
@@ -72,6 +73,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Campaña ────────────────────────────────────────────────── */}
+      <PromoBanner />
 
       {/* ── Categorías ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-14">
