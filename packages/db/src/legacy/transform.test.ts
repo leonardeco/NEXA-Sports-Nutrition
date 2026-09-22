@@ -55,9 +55,13 @@ describe("toSku", () => {
 })
 
 describe("migración del catálogo LEOFIT", () => {
-  it("migra los 127 productos sin perder ninguno", () => {
-    expect(legacy).toHaveLength(127)
-    expect(seed.products).toHaveLength(127)
+  it("migra todos los productos sin perder ninguno", () => {
+    // La cuenta sale del JSON y no de un número grabado: el catálogo crece
+    // cada vez que se añade una referencia a mano, y un 127 fijo caducó la
+    // primera vez que pasó. Los duplicados los atrapan los tests de slug y
+    // SKU únicos, que es donde pertenecen.
+    expect(legacy.length).toBeGreaterThanOrEqual(127)
+    expect(seed.products).toHaveLength(legacy.length)
   })
 
   it("extrae las 4 categorías y las ordena", () => {
@@ -177,8 +181,16 @@ describe("validaciones de la migración", () => {
     expect(() => transformCatalog([{ ...base, categoria: "Ropa" }])).toThrow(/Categoría desconocida/)
   })
 
-  it("rechaza imágenes que no son webp", () => {
-    expect(() => transformCatalog([{ ...base, imagen: "/img/productos/x.png" }])).toThrow(/no apunta a un \.webp/)
+  it("acepta webp, png y jpg como imagen de producto", () => {
+    for (const ext of ["webp", "png", "jpg", "jpeg", "PNG"]) {
+      expect(() => transformCatalog([{ ...base, imagen: `/img/productos/x.${ext}` }])).not.toThrow()
+    }
+  })
+
+  it("rechaza cualquier otro formato de imagen", () => {
+    for (const imagen of ["/img/productos/x.gif", "/img/productos/x.svg", "/img/productos/x"]) {
+      expect(() => transformCatalog([{ ...base, imagen }])).toThrow(/no apunta a una imagen válida/)
+    }
   })
 
   it("desempata slugs de nombres repetidos con el id legacy", () => {
