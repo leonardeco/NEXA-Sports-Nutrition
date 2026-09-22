@@ -13,7 +13,7 @@ una SPA estática con los productos en un archivo JSON y los pedidos por WhatsAp
 | Front y BFF | Next.js 15 (App Router), React 19, TypeScript estricto |
 | Estilos | Tailwind CSS 4 con tokens de marca en `packages/ui` |
 | Dominio | `packages/core` — sin dependencias de framework |
-| Datos | PostgreSQL 17 + pgvector, Prisma 6 |
+| Datos | PostgreSQL 18 + pgvector, Prisma 6 |
 | Pagos | Wompi (PSE, Nequi, tarjeta, Bancolombia) |
 | Asistente | Uso de herramientas sobre el catálogo |
 | Despliegue | Vercel + Neon |
@@ -54,15 +54,16 @@ Luego, en cualquiera de los dos casos:
 
 ```bash
 pnpm db:migrate                                    # aplica el esquema
-pnpm db:seed                                       # carga los 127 productos
+pnpm db:seed                                       # carga el catálogo
 pnpm db:admin correo@ejemplo.com "una contraseña"  # crea el acceso al panel
 pnpm dev
 ```
 
 La aplicación queda en `http://localhost:3000` y el panel en `/acceso`.
 
-El seed es idempotente y aborta si no salen 127 productos, 127 variantes y el stock total
-exacto: prefiere no cargar nada a cargar el catálogo a medias.
+El seed es idempotente y cuenta contra el propio archivo de origen, no contra un número
+grabado: aborta si productos, variantes, imágenes o el stock total no cuadran. Prefiere no
+cargar nada a cargar el catálogo a medias.
 
 > **El `.env` vive solo en la raíz del monorepo.** Prisma lo carga con `dotenv -e ../../.env`
 > en los scripts de `@nexa/db`, y Next desde `apps/web/next.config.ts`. Si aparece
@@ -79,7 +80,8 @@ Todas están en [`.env.example`](.env.example) con su explicación. Las que hay 
 | `ADMIN_SESSION_SECRET` | Firma la sesión del panel. Mínimo 32 caracteres, o el panel queda inaccesible a propósito |
 | `CRON_SECRET` | Autoriza el job que libera reservas vencidas |
 | `WOMPI_*` | Las cuatro claves de la pasarela. Sin ellas el botón de pago no se renderiza y la tienda sigue funcionando con WhatsApp |
-| `ANTHROPIC_API_KEY` | Asistente de ventas (F4) |
+| `ANTHROPIC_API_KEY` | Asistente de ventas (F4). Sin ella el asesor responde 503 y la tienda sigue en pie |
+| `VOYAGE_API_KEY` | Vectores del catálogo. Sin ella la búsqueda funciona, pero solo por texto |
 
 Ninguna se commitea: `.env` está en `.gitignore` y solo viaja `.env.example` con las claves vacías.
 
@@ -179,20 +181,25 @@ kubectl apply -k infra/k8s
 | Fase | Estado |
 |---|---|
 | F0 · Fundaciones | Completa |
-| F1 · Catálogo | Completa. 127 productos. Búsqueda híbrida texto + pgvector (RF-03); sin `VOYAGE_API_KEY` queda solo el texto |
-| F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola. Panel: precio, stock y visibilidad sin redesplegar (RF-22) |
-| F3 · Pagos Wompi | Código completo. Falta un pago sandbox real: las llaves de `.env` no pasan `pnpm wompi:check`. Ver [runbook](docs/runbook-wompi-sandbox.md) |
-| F4 · Asistente | Completa. Asesor con herramientas sobre el catálogo, barandas médicas y registro de sesión. Requiere `ANTHROPIC_API_KEY` |
+| F1 · Catálogo | Completa. 128 productos. Búsqueda híbrida texto + pgvector (RF-03); sin `VOYAGE_API_KEY` queda solo el texto |
+| F2 · Carrito y órdenes | Completa. Una orden se crea, reserva stock y expira sola. Panel: precio, stock, visibilidad, destacado e insignia sin redesplegar (RF-22) |
+| F3 · Pagos Wompi | Código completo, **sin estrenar**. Las llaves de `.env` son marcadores locales y no pasan `pnpm wompi:check`: no se ha procesado ningún pago, ni de prueba. Ver [runbook](docs/runbook-wompi-sandbox.md) |
+| F4 · Asistente | Código completo. NexaBot tiene herramientas sobre el catálogo, barandas médicas y registro de sesión, pero **está mudo en producción**: falta `ANTHROPIC_API_KEY` |
 | F5 · Endurecimiento | Completa. CSP, logs con `order_number`, jsx-a11y, E2E catálogo→pedido, Lighthouse en CI |
 | F6 · Portabilidad | Completa. `kubectl apply -k infra/k8s` deja Postgres, migraciones, web, HPA, Ingress y el cron de reservas |
 
-Verificación actual: 133 tests unitarios, 31 de integración contra PostgreSQL, E2E de catálogo a pedido.
+Verificación actual: 170 tests unitarios, 31 de integración contra PostgreSQL, E2E de
+catálogo a pedido.
 
-**Desviación conocida:** el proyecto de Neon corre PostgreSQL 16.15, no 17 como exige el
-principio 1 de la constitución. Neon no actualiza la versión mayor en sitio, así que la
-migración implica crear un proyecto nuevo y resembrar. Está planificada, y conviene hacerla
-antes de que entre el primer pedido real: hasta entonces el catálogo se resiembra en un
-comando y no hay nada que perder.
+Producción: <https://nexa-sports-nutrition-web.vercel.app>. `GET /api/health` responde
+`{"ok":true,"db":true}` cuando la aplicación alcanza la base; `/api/alive` dice qué commit
+está sirviendo.
+
+**Desviación conocida:** el proyecto de Neon corre PostgreSQL 18.6 y el principio 1 de la
+constitución exige 17. La migración desde 16 ya se hizo —Neon no actualiza la versión mayor
+en sitio, así que implicó proyecto nuevo y resembrar—, pero aterrizó una versión por encima
+de la escrita. Funciona; queda decidir si se enmienda la constitución a "17 o superior" en
+lugar de bajar la base.
 
 ## Licencia
 
