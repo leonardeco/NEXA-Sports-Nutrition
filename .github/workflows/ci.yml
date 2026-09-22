@@ -102,6 +102,12 @@ jobs:
           pnpm db:migrate:deploy
           pnpm db:seed
 
+      # Hasta ahora solo corrían a mano, y contra la base de Neon que sirve la
+      # tienda. Aquí van contra el PostgreSQL efímero del job: mueven stock y
+      # lo dejan como estaba, así que el E2E de después parte de lo sembrado.
+      - name: Tests de integración
+        run: pnpm test:integration
+
       - name: Build
         run: pnpm build
 
