@@ -1,3 +1,5 @@
+import { Money, type Cents } from "@nexa/core"
+
 /**
  * Datos de la tienda que la interfaz necesita. Lo que cambia por entorno
  * viene de variables; lo demás es contenido y vive aquí hasta que el panel
@@ -17,6 +19,34 @@ export const STORE = {
 
 export function whatsappLink(message: string): string {
   return `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(message)}`
+}
+
+/**
+ * Mensaje de WhatsApp con el pedido completo (RF-16).
+ *
+ * Lleva las líneas y no solo el número: quien atiende el chat tiene que
+ * saber qué se pidió sin ir a buscarlo al panel. Los saltos de línea
+ * sobreviven al `encodeURIComponent` y WhatsApp los respeta.
+ */
+export function orderWhatsappMessage(
+  order: {
+    orderNumber: string
+    totalCents: Cents
+    shippingCents: Cents
+    lines: readonly { productName: string; quantity: number; lineTotalCents: Cents }[]
+  },
+  intent: string,
+): string {
+  const items = order.lines
+    .map((l) => `- ${l.productName} x${l.quantity}: ${Money.format(l.lineTotalCents)}`)
+    .join("\n")
+
+  return [
+    `Hola, mi pedido es *${order.orderNumber}*:`,
+    items,
+    `Envío ${Money.format(order.shippingCents)} · Total *${Money.format(order.totalCents)}*`,
+    intent,
+  ].join("\n")
 }
 
 export const PRICE_RANGES = [

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { WompiButton } from "@/app/components/wompi-button"
 import { wompiGateway } from "@/lib/wompi"
-import { STORE, whatsappLink } from "@/lib/config"
+import { STORE, orderWhatsappMessage, whatsappLink } from "@/lib/config"
 import { readSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -42,7 +42,7 @@ export default async function OrdenPage({ params }: { params: Params }) {
   const pendiente = order.status === "PENDING_PAYMENT"
   // Sin pasarela configurada, WhatsApp no es la alternativa: es la unica via.
   const hayPasarela = wompiGateway() !== null
-  const mensaje = `Hola, acabo de crear el pedido *${order.orderNumber}* por ${Money.format(order.totalCents)}. Quiero coordinar el pago.`
+  const mensaje = orderWhatsappMessage(order, "Quiero coordinar el pago.")
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">

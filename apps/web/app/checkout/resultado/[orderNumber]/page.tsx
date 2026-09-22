@@ -3,7 +3,7 @@ import { Money } from "@nexa/core"
 import { orderRepository } from "@nexa/db"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { STORE, whatsappLink } from "@/lib/config"
+import { STORE, orderWhatsappMessage, whatsappLink } from "@/lib/config"
 import { readSession } from "@/lib/session"
 import { wompiGateway } from "@/lib/wompi"
 import { PaymentPoller } from "./payment-poller"
@@ -108,9 +108,7 @@ export default async function ResultadoPage({
 
         {!pagado && (
           <a
-            href={whatsappLink(
-              `Hola, tengo el pedido *${order.orderNumber}* y quiero ayuda con el pago.`,
-            )}
+            href={whatsappLink(orderWhatsappMessage(order, "Necesito ayuda con el pago."))}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm underline"
