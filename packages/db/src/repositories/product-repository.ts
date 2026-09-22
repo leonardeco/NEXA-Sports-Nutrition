@@ -9,6 +9,7 @@ import {
   AdminProductError,
   Money,
   adjustmentDelta,
+  normalizeBadge,
   pickEditableVariant,
   reciprocalRankFusion,
   vectorLiteral,
@@ -207,7 +208,13 @@ export class PrismaProductRepository implements ProductRepository {
    */
   async applyAdminProductChange(
     slug: Slug,
-    input: { readonly priceCop?: number; readonly stock?: number; readonly isActive?: boolean },
+    input: {
+      readonly priceCop?: number
+      readonly stock?: number
+      readonly isActive?: boolean
+      readonly isFeatured?: boolean
+      readonly badge?: string | null
+    },
     actorId: string,
   ): Promise<ProductDetail> {
     return this.db.$transaction(async (tx) => {
@@ -254,6 +261,25 @@ export class PrismaProductRepository implements ProductRepository {
           data: { isActive: input.isActive },
         })
         diff.isActive = { from: row.isActive, to: input.isActive }
+      }
+
+      if (input.isFeatured !== undefined && input.isFeatured !== row.isFeatured) {
+        await tx.product.update({
+          where: { id: row.id },
+          data: { isFeatured: input.isFeatured },
+        })
+        diff.isFeatured = { from: row.isFeatured, to: input.isFeatured }
+      }
+
+      if (input.badge !== undefined) {
+        const next = normalizeBadge(input.badge)
+        if (next !== row.badge) {
+          await tx.product.update({
+            where: { id: row.id },
+            data: { badge: next },
+          })
+          diff.badge = { from: row.badge, to: next }
+        }
       }
 
       if (Object.keys(diff).length > 0) {

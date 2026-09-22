@@ -33,8 +33,10 @@ export type {
 } from "./contracts"
 export {
   AdminProductError,
+  BADGE_MAX_LENGTH,
   adjustmentDelta,
   changedAdminProductFields,
+  normalizeBadge,
   pickEditableVariant,
 } from "./admin-product"
 export {

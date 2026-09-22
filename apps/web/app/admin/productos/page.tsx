@@ -57,6 +57,23 @@ export default async function AdminProductosPage({ searchParams }: { searchParam
                     <Link href={`/admin/productos/${product.slug}`} className="hover:underline">
                       {product.name}
                     </Link>
+                    {/* Sin esto habría que abrir cada ficha para saber qué sale en portada. */}
+                    {product.isFeatured && (
+                      <span
+                        className="ml-2 align-middle text-[0.62rem] font-semibold tracking-wide uppercase"
+                        style={{ color: "var(--color-nexa-orange)" }}
+                      >
+                        Destacado
+                      </span>
+                    )}
+                    {product.badge && (
+                      <span
+                        className="ml-2 border px-1.5 py-0.5 align-middle text-[0.62rem]"
+                        style={{ borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}
+                      >
+                        {product.badge}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 pr-4" style={{ color: "var(--text-secondary)" }}>
                     {product.brand.name}

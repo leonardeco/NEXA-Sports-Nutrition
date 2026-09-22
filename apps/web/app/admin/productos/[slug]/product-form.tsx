@@ -1,17 +1,31 @@
 "use client"
 
-import { Money, changedAdminProductFields, type ProductDetail } from "@nexa/core"
+import {
+  BADGE_MAX_LENGTH,
+  Money,
+  changedAdminProductFields,
+  type ProductDetail,
+} from "@nexa/core"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+
+const inputStyle = {
+  borderColor: "var(--border-subtle)",
+  background: "var(--surface-raised)",
+  color: "var(--text-primary)",
+}
 
 export function AdminProductForm({ product }: { product: ProductDetail }) {
   const router = useRouter()
   const defaultVariant = product.variants.find((item) => item.isDefault) ?? product.variants[0]
   const initialPriceCop = Money.toCOP(product.priceCents)
   const initialStock = defaultVariant?.stock ?? product.stock
+  const initialBadge = product.badge ?? ""
   const [priceCop, setPriceCop] = useState(String(initialPriceCop))
   const [stock, setStock] = useState(String(initialStock))
   const [isActive, setIsActive] = useState(product.isActive)
+  const [isFeatured, setIsFeatured] = useState(product.isFeatured)
+  const [badge, setBadge] = useState(initialBadge)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState(false)
   const [pending, setPending] = useState(false)
@@ -27,9 +41,13 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
       priceCop: nextPrice,
       stock: nextStock,
       isActive,
+      isFeatured,
+      badge,
       initialPriceCop,
       initialStock,
       initialActive: product.isActive,
+      initialFeatured: product.isFeatured,
+      initialBadge: product.badge,
     })
     if (!parsed.ok) {
       setError(parsed.error)
@@ -86,7 +104,7 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
           value={priceCop}
           onChange={(event) => setPriceCop(event.target.value)}
           className="mt-1 w-full border px-3 py-2.5 text-sm tabular-nums"
-          style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)", color: "var(--text-primary)" }}
+          style={inputStyle}
         />
       </div>
 
@@ -103,8 +121,29 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
           value={stock}
           onChange={(event) => setStock(event.target.value)}
           className="mt-1 w-full border px-3 py-2.5 text-sm tabular-nums"
-          style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)", color: "var(--text-primary)" }}
+          style={inputStyle}
         />
+      </div>
+
+      <div>
+        <label htmlFor="badge" className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          Insignia
+        </label>
+        <input
+          id="badge"
+          name="badge"
+          type="text"
+          maxLength={BADGE_MAX_LENGTH}
+          value={badge}
+          onChange={(event) => setBadge(event.target.value)}
+          placeholder="Más vendido"
+          aria-describedby="badge-ayuda"
+          className="mt-1 w-full border px-3 py-2.5 text-sm"
+          style={inputStyle}
+        />
+        <p id="badge-ayuda" className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+          Etiqueta sobre la foto en el catálogo. Déjala vacía para quitarla.
+        </p>
       </div>
 
       <div className="flex min-h-11 items-center gap-3">
@@ -119,6 +158,27 @@ export function AdminProductForm({ product }: { product: ProductDetail }) {
         <label htmlFor="isActive" className="text-sm">
           Visible en el catálogo
         </label>
+      </div>
+
+      <div>
+        <div className="flex min-h-11 items-center gap-3">
+          <input
+            id="isFeatured"
+            name="isFeatured"
+            type="checkbox"
+            checked={isFeatured}
+            onChange={(event) => setIsFeatured(event.target.checked)}
+            aria-describedby="featured-ayuda"
+            className="size-5"
+          />
+          <label htmlFor="isFeatured" className="text-sm">
+            Destacado en la portada
+          </label>
+        </div>
+        <p id="featured-ayuda" className="text-xs" style={{ color: "var(--text-muted)" }}>
+          La portada muestra hasta 12 destacados, ordenados por nombre. Si marcas más, los
+          últimos del alfabeto no salen.
+        </p>
       </div>
 
       <button

@@ -122,6 +122,9 @@ export interface ProductRepository {
       readonly priceCop?: number
       readonly stock?: number
       readonly isActive?: boolean
+      readonly isFeatured?: boolean
+      /** `null` quita la insignia. Ausente significa "no tocar". */
+      readonly badge?: string | null
     },
     actorId: string,
   ): Promise<ProductDetail>

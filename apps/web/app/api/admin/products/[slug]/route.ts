@@ -20,13 +20,15 @@ export async function PATCH(request: Request, { params }: Params) {
 
   try {
     const { slug } = await params
-    const { priceCop, stock, isActive } = parsed.data
+    const { priceCop, stock, isActive, isFeatured, badge } = parsed.data
     const product = await productRepository.applyAdminProductChange(
       slug,
       {
         ...(priceCop !== undefined ? { priceCop } : {}),
         ...(stock !== undefined ? { stock } : {}),
         ...(isActive !== undefined ? { isActive } : {}),
+        ...(isFeatured !== undefined ? { isFeatured } : {}),
+        ...(badge !== undefined ? { badge } : {}),
       },
       adminId,
     )
