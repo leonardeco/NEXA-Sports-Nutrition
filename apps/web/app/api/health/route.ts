@@ -32,7 +32,7 @@ function describe(error: unknown): { code: string; name: string; message: string
   const message = String(e?.message ?? error ?? "")
     .replace(/:\/\/[^@\s]+@/g, "://***@")
     .replace(/\s+/g, " ")
-    .slice(0, 400)
+    .slice(0, 2000)
   return {
     code: e?.code ? String(e.code) : "none",
     name: e?.name ? String(e.name) : typeof error,
