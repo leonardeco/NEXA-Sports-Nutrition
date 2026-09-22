@@ -1,27 +1,15 @@
 import { AssistantError, chatTurnSchema } from "@nexa/core"
 import { cartRepository, chatRepository, productRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
-import { errorResponse, invalidRequest, readJson } from "@/lib/api"
+import { errorResponse, invalidRequest, readJson, tooManyRequests } from "@/lib/api"
 import { AssistantConfigError, handleAssistantTurn } from "@/lib/assistant"
 import { log } from "@/lib/log"
+import { clientKey } from "@/lib/rate-limit"
+import { chatLimiter } from "@/lib/rate-limits"
 import { requireSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
-
-const hits = new Map<string, number[]>()
-
-function allow(ip: string): boolean {
-  const now = Date.now()
-  const recent = (hits.get(ip) ?? []).filter((stamp) => now - stamp < 60_000)
-  if (recent.length >= 10) {
-    hits.set(ip, recent)
-    return false
-  }
-  recent.push(now)
-  hits.set(ip, recent)
-  return true
-}
 
 /**
  * POST /api/chat — un turno del asesor de ventas (RF-17 a RF-21).
@@ -31,11 +19,11 @@ function allow(ip: string): boolean {
  * sigue en pie: se responde 503 y se ofrece WhatsApp (RNF-03).
  */
 export async function POST(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local"
-  if (!allow(ip)) {
-    return NextResponse.json(
-      { error: "Demasiados mensajes seguidos. Espera un momento o escríbenos por WhatsApp." },
-      { status: 429 },
+  const decision = chatLimiter.check(clientKey(request))
+  if (!decision.allowed) {
+    return tooManyRequests(
+      "Demasiados mensajes seguidos. Espera un momento o escríbenos por WhatsApp.",
+      decision.retryAfterSeconds,
     )
   }
 

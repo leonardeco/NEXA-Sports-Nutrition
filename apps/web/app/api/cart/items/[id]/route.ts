@@ -1,12 +1,24 @@
 import { setCartItemSchema } from "@nexa/core"
 import { cartRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
-import { errorResponse, invalidRequest, readJson } from "@/lib/api"
+import { errorResponse, invalidRequest, readJson, tooManyRequests } from "@/lib/api"
+import { clientKey } from "@/lib/rate-limit"
+import { cartWriteLimiter } from "@/lib/rate-limits"
 import { readSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 
 type Params = { params: Promise<{ id: string }> }
+
+/** Devuelve la respuesta de 429 si el cliente se pasó de peticiones. */
+function overBudget(request: Request): NextResponse | null {
+  const decision = cartWriteLimiter.check(clientKey(request))
+  if (decision.allowed) return null
+  return tooManyRequests(
+    "Demasiados cambios seguidos en el carrito. Espera un momento.",
+    decision.retryAfterSeconds,
+  )
+}
 
 /**
  * Sin cookie no hay carrito que modificar. Se usa `readSession` y no
@@ -20,6 +32,9 @@ async function sessionOr401(): Promise<string | NextResponse> {
 
 /** PATCH — fija la cantidad exacta de una línea. Cero la elimina. */
 export async function PATCH(request: Request, { params }: Params) {
+  const limited = overBudget(request)
+  if (limited) return limited
+
   const session = await sessionOr401()
   if (session instanceof NextResponse) return session
 
@@ -40,7 +55,10 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 /** DELETE — quita la línea del carrito. */
-export async function DELETE(_request: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
+  const limited = overBudget(request)
+  if (limited) return limited
+
   const session = await sessionOr401()
   if (session instanceof NextResponse) return session
 

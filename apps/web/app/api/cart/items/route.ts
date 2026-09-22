@@ -1,7 +1,9 @@
 import { addCartItemSchema } from "@nexa/core"
 import { cartRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
-import { errorResponse, invalidRequest, readJson } from "@/lib/api"
+import { errorResponse, invalidRequest, readJson, tooManyRequests } from "@/lib/api"
+import { clientKey } from "@/lib/rate-limit"
+import { cartWriteLimiter } from "@/lib/rate-limits"
 import { requireSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -14,6 +16,14 @@ export const dynamic = "force-dynamic"
  * (RF-06). Del cuerpo no se lee ningún precio; el total sale de la base.
  */
 export async function POST(request: Request) {
+  const decision = cartWriteLimiter.check(clientKey(request))
+  if (!decision.allowed) {
+    return tooManyRequests(
+      "Demasiados cambios seguidos en el carrito. Espera un momento.",
+      decision.retryAfterSeconds,
+    )
+  }
+
   const parsed = addCartItemSchema.safeParse(await readJson(request))
   if (!parsed.success) return invalidRequest(parsed.error)
 

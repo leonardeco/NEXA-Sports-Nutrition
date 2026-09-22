@@ -1,8 +1,10 @@
 import { checkoutSchema } from "@nexa/core"
 import { orderRepository } from "@nexa/db"
 import { NextResponse } from "next/server"
-import { errorResponse, invalidRequest, readJson } from "@/lib/api"
+import { errorResponse, invalidRequest, readJson, tooManyRequests } from "@/lib/api"
 import { log } from "@/lib/log"
+import { clientKey } from "@/lib/rate-limit"
+import { checkoutLimiter } from "@/lib/rate-limits"
 import { readSession } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -20,6 +22,18 @@ export const dynamic = "force-dynamic"
  * handler solo crea la orden reservada (RF-16).
  */
 export async function POST(request: Request) {
+  // Primero y antes de tocar la base: cada checkout aparta stock 30 minutos
+  // y el cron que libera lo vencido corre una vez al día, así que sin freno
+  // un script puede retener el inventario entero sin pagar nada.
+  const decision = checkoutLimiter.check(clientKey(request))
+  if (!decision.allowed) {
+    log({ event: "checkout.rate_limited", level: "warn" })
+    return tooManyRequests(
+      "Demasiados intentos de compra seguidos. Espera un momento o escríbenos por WhatsApp.",
+      decision.retryAfterSeconds,
+    )
+  }
+
   const sessionId = await readSession()
   if (!sessionId) {
     return NextResponse.json({ error: "No hay un carrito abierto" }, { status: 401 })

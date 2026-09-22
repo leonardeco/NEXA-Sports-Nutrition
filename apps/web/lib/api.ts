@@ -46,6 +46,18 @@ export function invalidRequest(error: z.ZodError): NextResponse {
   return NextResponse.json({ error: firstIssue(error) }, { status: 400 })
 }
 
+/**
+ * 429 con `Retry-After` para que el cliente sepa cuándo reintentar en vez
+ * de machacar. El mensaje ofrece WhatsApp: si frenamos a alguien que de
+ * verdad quería comprar, no puede quedarse sin salida (RNF-03).
+ */
+export function tooManyRequests(message: string, retryAfterSeconds: number): NextResponse {
+  return NextResponse.json(
+    { error: message, retryAfterSeconds },
+    { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+  )
+}
+
 /** Cuerpo JSON o null: un cuerpo ilegible no debe reventar el handler. */
 export async function readJson(request: Request): Promise<unknown> {
   return request.json().catch(() => null)
