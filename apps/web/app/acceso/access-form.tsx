@@ -46,7 +46,7 @@ export function AccessForm() {
           type="email"
           autoComplete="username"
           required
-          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm"
+          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm text-black placeholder:text-neutral-400"
           style={{ borderColor: "var(--border-subtle)" }}
         />
       </div>
@@ -61,7 +61,7 @@ export function AccessForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm"
+          className="mt-1 w-full border bg-white px-3 py-2.5 text-sm text-black placeholder:text-neutral-400"
           style={{ borderColor: "var(--border-subtle)" }}
         />
       </div>

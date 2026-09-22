@@ -103,7 +103,7 @@ export function CartLines({ cart }: { cart: Cart }) {
                         body: JSON.stringify({ quantity: Number(event.target.value) }),
                       })
                     }
-                    className="border bg-white px-2 py-1.5 text-sm tabular-nums"
+                    className="border bg-white px-2 py-1.5 text-sm text-black tabular-nums"
                     style={{ borderColor: "var(--border-subtle)" }}
                   >
                     {Array.from({ length: tope }, (_, i) => i + 1).map((n) => (
