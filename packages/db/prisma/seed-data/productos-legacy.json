@@ -1363,12 +1363,12 @@
     "marca": "Varios",
     "categoria": "Otros Suplementos",
     "precio": 160000,
-    "descripcion": "Potenciador anabolico natural con ingredientes herbales para masa y fuerza muscular.",
+    "descripcion": "Suplemento nutricional para hombres orientado a aumentar la testosterona, la energía, la libido y el crecimiento muscular. Frasco de 120 tabletas.",
     "imagen": "/img/productos/98-testabolic-xtreme.webp",
-    "badge": null,
+    "badge": "Más vendido",
     "stock": 7,
-    "destacado": false,
-    "beneficios": "Aporta los nutrientes necesarios para maximizar tus resultados físicos y mantener un estilo de vida saludable.",
+    "destacado": true,
+    "beneficios": "Aumenta fuerza, energía y masa muscular de forma natural. Mejora el rendimiento en los entrenos. Ayuda a quemar grasa y definir el cuerpo. Apoya el equilibrio hormonal.",
     "modo_uso": "Consultar indicaciones en el envase del producto o con un asesor en nutrición."
   },
   {

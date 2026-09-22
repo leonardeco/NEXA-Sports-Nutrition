@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const [destacados, categorias, marcas] = await Promise.all([
-    getFeaturedProducts(8),
+    getFeaturedProducts(12),
     getCategories(),
     getBrands(),
   ])
