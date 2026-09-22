@@ -28,7 +28,7 @@ export function SalesAdvisor() {
   const [lines, setLines] = useState<Line[]>([
     {
       from: "advisor",
-      text: "Hola, soy el asesor de NEXA. ¿Buscas proteína, creatina, un preentreno? Dime qué entrenas y te armo una recomendación del catálogo.",
+      text: "Hola, soy NexaBot, el asesor de NEXA. ¿Buscas proteína, creatina, un preentreno? Dime qué entrenas y te armo una recomendación del catálogo.",
     },
   ])
   const bottom = useRef<HTMLDivElement>(null)
@@ -77,16 +77,16 @@ export function SalesAdvisor() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="nexa-asesor"
-        className="fixed right-5 bottom-24 z-50 flex size-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105"
+        className="fixed right-5 bottom-24 z-50 flex h-14 items-center gap-2 rounded-full pr-5 pl-4 text-white shadow-lg transition-transform hover:scale-105"
         style={{ background: "var(--color-nexa-navy-deep)" }}
-        aria-label={open ? "Cerrar el asesor" : "Abrir el asesor de NEXA"}
+        aria-label={open ? "Cerrar NexaBot" : "Abrir NexaBot, el asesor de NEXA"}
       >
         {open ? (
           <span className="text-2xl leading-none" aria-hidden="true">
             ×
           </span>
         ) : (
-          <svg viewBox="0 0 24 24" className="size-7" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="size-7 shrink-0" fill="none" aria-hidden="true">
             <path
               d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H13l-4 3.5V16H7.5A2.5 2.5 0 0 1 5 13.5v-7Z"
               stroke="currentColor"
@@ -101,20 +101,26 @@ export function SalesAdvisor() {
             />
           </svg>
         )}
+        <span
+          className="text-base font-bold italic uppercase leading-none"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {open ? "Cerrar" : "NexaBot"}
+        </span>
       </button>
 
       {open ? (
         <section
           id="nexa-asesor"
           className="fixed right-5 bottom-40 z-50 flex w-[min(100%-2.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] shadow-2xl"
-          aria-label="Asesor NEXA"
+          aria-label="NexaBot"
         >
           <header className="bg-[var(--color-nexa-navy-deep)] px-4 py-3 text-white">
             <p
               className="text-lg font-bold italic uppercase leading-none"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Asesor NEXA
+              NexaBot
             </p>
             <p className="mt-1 text-[11px] leading-snug text-white/70">{ASSISTANT_DISCLAIMER}</p>
           </header>
