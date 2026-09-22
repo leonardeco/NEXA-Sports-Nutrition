@@ -23,17 +23,20 @@ const nextConfig: NextConfig = {
   // Prisma no debe entrar al bundle del servidor: se carga como módulo nativo.
   serverExternalPackages: ["@prisma/client"],
 
-  // El cliente de Prisma se genera en packages/db/generated/client, fuera de
-  // node_modules, y carga su motor (.so.node) en tiempo de ejecución: el
-  // rastreo de archivos de Next no ve esa carga y en Vercel la función salía
-  // sin motor — "could not locate the Query Engine for rhel-openssl-3.0.x".
-  // Esto lo mete a la fuerza en cada función. Es el arreglo que documenta
-  // Prisma en pris.ly/d/engine-not-found-nextjs.
+  // El motor de Prisma (.so.node) en Vercel.
+  //
+  // El cliente se genera en packages/db/generated/client, pero webpack lo
+  // empaqueta dentro de apps/web, y desde ahí Prisma resuelve `generated/client`
+  // relativo a la APP: en la función busca /var/task/apps/web/generated/client,
+  // y la ruta absoluta que grabó al generar (/vercel/path0/packages/db/...) es
+  // la del contenedor de build, que en runtime no existe. Incluir el motor
+  // desde packages/db no sirve — viaja, pero a un sitio donde nadie lo mira.
+  //
+  // Por eso `vercel-build` lo copia a apps/web/generated/client, que es lo
+  // PRIMERO que Prisma busca, y esto lo mete en cada función. La carpeta
+  // está en .gitignore: solo existe durante el build.
   outputFileTracingIncludes: {
-    "/**": [
-      "../../packages/db/generated/client/**/*.node",
-      "../../packages/db/generated/client/schema.prisma",
-    ],
+    "/**": ["./generated/client/**"],
   },
 
   images: {

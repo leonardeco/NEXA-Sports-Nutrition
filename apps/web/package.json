@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "pnpm -C ../.. --filter @nexa/db generate && next build",
+    "vercel-build": "pnpm -C ../.. --filter @nexa/db generate && mkdir -p generated/client && cp ../../packages/db/generated/client/libquery_engine-*.so.node ../../packages/db/generated/client/schema.prisma generated/client/ && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

@@ -11,6 +11,8 @@ build/
 
 # Prisma
 packages/db/generated/
+# Copia del motor que vercel-build deja donde Prisma la busca en la funcion
+apps/web/generated/
 
 # Entorno — nunca commitear secretos (constitución, principio 7)
 .env
