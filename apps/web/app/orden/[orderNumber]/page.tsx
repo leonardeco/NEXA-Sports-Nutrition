@@ -4,6 +4,7 @@ import { orderRepository } from "@nexa/db"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { WompiButton } from "@/app/components/wompi-button"
+import { wompiGateway } from "@/lib/wompi"
 import { STORE, whatsappLink } from "@/lib/config"
 import { readSession } from "@/lib/session"
 
@@ -39,6 +40,8 @@ export default async function OrdenPage({ params }: { params: Params }) {
   if (!order) notFound()
 
   const pendiente = order.status === "PENDING_PAYMENT"
+  // Sin pasarela configurada, WhatsApp no es la alternativa: es la unica via.
+  const hayPasarela = wompiGateway() !== null
   const mensaje = `Hola, acabo de crear el pedido *${order.orderNumber}* por ${Money.format(order.totalCents)}. Quiero coordinar el pago.`
 
   return (
@@ -134,7 +137,11 @@ export default async function OrdenPage({ params }: { params: Params }) {
         className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
         style={{ background: "var(--color-nexa-whatsapp)" }}
       >
-        {pendiente ? "Prefiero coordinarlo por WhatsApp" : "Escribirnos por WhatsApp"}
+        {pendiente && hayPasarela
+          ? "Prefiero coordinarlo por WhatsApp"
+          : pendiente
+            ? "Coordinar el pago por WhatsApp"
+            : "Escribirnos por WhatsApp"}
       </a>
       <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
         Te atendemos al {STORE.whatsappDisplay}.
