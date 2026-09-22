@@ -39,7 +39,11 @@ export function verifyToken(token: string): string | null {
   const key = secret()
   if (!key) return null
 
-  const [adminId, expiresAt, signature] = token.split(".")
+  // Exactamente tres segmentos: con `split` a secas, un testigo con basura
+  // detrás pasaba igual porque los segmentos de sobra se ignoraban.
+  const parts = token.split(".")
+  if (parts.length !== 3) return null
+  const [adminId, expiresAt, signature] = parts
   if (!adminId || !expiresAt || !signature) return null
 
   const expected = Buffer.from(sign(`${adminId}.${expiresAt}`, key))
