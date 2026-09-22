@@ -6,9 +6,29 @@
 | Proyecto | NEXA Sports Nutrition (refactor de `sports-store` / LEOFIT) |
 | Versión | 1.0 — 2026-09-02 |
 | Autor | Leonardo (`leonardecojt@gmail.com`) |
-| Estado | Borrador para aprobación |
+| Estado | Aprobado y ejecutado. Ver la nota de más abajo |
 | Repo origen | `github.com/leonardeco/sports-store` |
-| Documentos ligados | [`docs/constitution.md`](../constitution.md), ADR-0001 … ADR-0007 |
+| Documentos ligados | [`docs/constitution.md`](../constitution.md), ADR-0001 … ADR-0010 |
+
+> ### Qué ha cambiado desde que se aprobó · 22 de septiembre de 2026
+>
+> Este documento describe el sistema **tal como se diseñó el 2 de septiembre**, y las
+> cifras de las secciones 4 y 7 son el retrato de LEOFIT en ese momento. Se conservan como
+> están: reescribirlas falsearía el punto de partida. Lo que es distinto hoy:
+>
+> - **El catálogo tiene 128 productos**, no los 127 que se migraron: el 14 de septiembre se
+>   añadió a mano Creatine Monohydrate 3000. El script de carga nunca tuvo el número
+>   grabado, cuenta contra el propio archivo de origen.
+> - **La base corre PostgreSQL 18.6**, no la 17 que fija el principio 1 de la constitución.
+>   Es una desviación abierta: queda decidir si se enmienda la constitución a "17 o
+>   superior" o se baja la base. Las secciones 6.1 y 9 siguen diciendo 17 porque eso es lo
+>   que decidió ADR-0002.
+> - **Las siete fases están construidas y desplegadas** en Vercel. F3 (pagos) y F4
+>   (asistente) están escritas pero sin estrenar: faltan las credenciales de Wompi y la de
+>   Anthropic. El [README](../../README.md) lleva el estado al día.
+> - **Se añadieron tres decisiones** que el diseño original no contemplaba: ADR-0008
+>   (el carrito es una orden en borrador), ADR-0009 (el importe manda sobre la firma del
+>   webhook) y ADR-0010 (embeddings de Voyage con pgvector).
 
 ---
 
@@ -445,8 +465,10 @@ Script idempotente `packages/db/scripts/migrate-legacy.ts`:
 6. Sube las 274 imágenes a Vercel Blob y guarda las URLs en `product_images`.
 7. Genera embeddings de `name + description + benefits` para la búsqueda semántica.
 
-**Verificación de la migración:** 127 productos, 127 variantes, ≥127 imágenes, suma de
-stock igual a la del JSON original. Si no cuadra, el script falla.
+**Verificación de la migración:** tantos productos y variantes como traiga el archivo de
+origen, al menos una imagen por producto, y suma de stock igual a la del JSON. Si no
+cuadra, el script falla. Los conteos se derivan del propio archivo y no van grabados en el
+código, que es lo que permitió pasar de 127 a 128 productos sin tocar el script.
 
 ---
 
