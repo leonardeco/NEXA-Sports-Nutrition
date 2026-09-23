@@ -25,7 +25,19 @@ test.describe("catálogo → carrito → pedido (constitución 5)", () => {
 
     await expect(page).toHaveURL(/\/orden\//, { timeout: 20_000 })
     await expect(page.getByRole("heading", { name: /pedido/i })).toBeVisible()
-    await expect(page.getByText(/NEXA-/)).toBeVisible()
-    await expect(page.getByRole("link", { name: /WhatsApp/i })).toBeVisible()
+
+    const referencia = page.getByText(/NEXA-\d{6}-[A-Z0-9]+/).first()
+    await expect(referencia).toBeVisible()
+    const numero = (await referencia.textContent())?.match(/NEXA-\d{6}-[A-Z0-9]+/)?.[0]
+    expect(numero).toBeTruthy()
+
+    // Por nombre exacto: /WhatsApp/i tambien casa con el enlace del pie y
+    // con el boton flotante, y Playwright aborta por locator ambiguo.
+    const coordinarPago = page.getByRole("link", { name: "Coordinar el pago por WhatsApp" })
+    await expect(coordinarPago).toBeVisible()
+
+    // El mensaje tiene que llevar la referencia: sin ella, al asesor le
+    // llega un pedido que no puede cruzar con ninguna orden.
+    await expect(coordinarPago).toHaveAttribute("href", new RegExp(numero!))
   })
 })
