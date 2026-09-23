@@ -32,7 +32,7 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: wait-migrate
-          image: pgvector/pgvector:pg17
+          image: pgvector/pgvector:pg18
           command:
             - /bin/sh
             - -c

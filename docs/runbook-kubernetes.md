@@ -14,7 +14,7 @@ Criterio de F6: `kubectl apply -k infra/k8s` deja el stack completo.
 | Namespace | `nexa` | Aísla el stack |
 | ConfigMap | `nexa-config` | URL pública, tarifa de envío, WhatsApp |
 | Secret | `nexa-secret` | Base, sesión de admin, cron, Wompi, Anthropic |
-| StatefulSet + Service | `nexa-postgres` | PostgreSQL 17 con pgvector |
+| StatefulSet + Service | `nexa-postgres` | PostgreSQL 18 con pgvector |
 | Job | `nexa-migrate` | `prisma migrate deploy` |
 | Deployment + Service + HPA | `nexa-web` | Next.js standalone, 1–3 réplicas |
 | Ingress | `nexa-web` | Host `nexa.local`, clase `nginx` |
