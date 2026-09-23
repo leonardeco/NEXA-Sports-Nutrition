@@ -128,7 +128,18 @@ jobs:
             fi
             sleep 2
           done
-          pnpm test:e2e
+          # Si el E2E falla, el porque casi siempre esta en el log del
+          # servidor, no en el del test: un 500 llega al navegador como un
+          # mensaje generico. Se vuelca y ademas se resume en una anotacion,
+          # que es lo unico legible sin iniciar sesion en GitHub.
+          if ! pnpm test:e2e; then
+            echo "::group::Log del servidor"
+            tail -100 /tmp/nexa-web.log
+            echo "::endgroup::"
+            echo "::error::E2E fallo. Servidor: $(tail -5 /tmp/nexa-web.log | tr '
+' ' ')"
+            exit 1
+          fi
           CHROME=$(node --input-type=module -e "import { chromium } from '@playwright/test'; console.log(chromium.executablePath())")
           pnpm exec lhci autorun --collect.settings.chromePath="$CHROME"
 
@@ -161,4 +172,11 @@ jobs:
           version: v1.31.6
 
       - name: Validar manifiestos
-        run: kubectl apply -k infra/k8s --dry-run=client
+        run: |
+          if ! salida=$(kubectl apply -k infra/k8s --dry-run=client 2>&1); then
+            echo "$salida"
+            echo "::error::kustomize fallo: $(echo "$salida" | tail -5 | tr '
+' ' ')"
+            exit 1
+          fi
+          echo "$salida"
