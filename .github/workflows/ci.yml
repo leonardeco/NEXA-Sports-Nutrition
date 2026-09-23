@@ -23,7 +23,7 @@ jobs:
 
       # Sin `version`: la manda `packageManager` de package.json. Declarar
       # las dos hace que la accion falle con ERR_PNPM_BAD_PM_VERSION.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v7
         with:
@@ -80,7 +80,7 @@ jobs:
 
       # Sin `version`: la manda `packageManager` de package.json. Declarar
       # las dos hace que la accion falle con ERR_PNPM_BAD_PM_VERSION.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v7
         with:
