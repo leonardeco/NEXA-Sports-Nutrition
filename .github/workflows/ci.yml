@@ -136,8 +136,7 @@ jobs:
             echo "::group::Log del servidor"
             tail -100 /tmp/nexa-web.log
             echo "::endgroup::"
-            echo "::error::E2E fallo. Servidor: $(tail -5 /tmp/nexa-web.log | tr '
-' ' ')"
+            echo "::error::E2E fallo. Servidor: $(tail -5 /tmp/nexa-web.log | tr -s '[:space:]' ' ')"
             exit 1
           fi
           CHROME=$(node --input-type=module -e "import { chromium } from '@playwright/test'; console.log(chromium.executablePath())")
@@ -175,8 +174,7 @@ jobs:
         run: |
           if ! salida=$(kubectl apply -k infra/k8s --dry-run=client 2>&1); then
             echo "$salida"
-            echo "::error::kustomize fallo: $(echo "$salida" | tail -5 | tr '
-' ' ')"
+            echo "::error::kustomize fallo: $(echo "$salida" | tail -5 | tr -s '[:space:]' ' ')"
             exit 1
           fi
           echo "$salida"
