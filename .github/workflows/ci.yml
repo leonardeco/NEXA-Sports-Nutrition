@@ -157,7 +157,7 @@ jobs:
       # ADR-0006: no se opera el cluster, pero la imagen y los manifiestos
       # se validan en cada PR para que la portabilidad no envejezca sin uso.
       - name: Construir imagen web
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/Dockerfile
@@ -203,7 +203,7 @@ jobs:
           echo "La imagen arranca y sirve catalogo, /api/alive y estaticos"
 
       - name: Construir imagen de migraciones
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/Dockerfile
