@@ -108,8 +108,14 @@ jobs:
       - name: Tests de integración
         run: pnpm test:integration
 
-      - name: Build
-        run: pnpm build
+      # `vercel-build` y no `build`: es el que copia el motor de Prisma a
+      # apps/web/generated/client, que es donde lo busca el cliente una vez
+      # webpack lo ha empaquetado dentro de la app. Con `build` a secas el
+      # servidor arranca pero Prisma no puede inicializarse, y como el
+      # catalogo tiene repositorio de respaldo estatico la tienda parece
+      # funcionar hasta que alguien añade algo al carrito.
+      - name: Build como en produccion
+        run: pnpm --filter @nexa/web vercel-build
 
       - name: Instalar Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -136,7 +142,7 @@ jobs:
             echo "::group::Log del servidor"
             tail -100 /tmp/nexa-web.log
             echo "::endgroup::"
-            echo "::error::E2E fallo. Servidor: $(tail -5 /tmp/nexa-web.log | tr -s '[:space:]' ' ')"
+            echo "::error::E2E fallo. Servidor: $(tail -20 /tmp/nexa-web.log | tr -s '[:space:]' ' ' | cut -c1-900)"
             exit 1
           fi
           CHROME=$(node --input-type=module -e "import { chromium } from '@playwright/test'; console.log(chromium.executablePath())")
@@ -172,9 +178,21 @@ jobs:
 
       - name: Validar manifiestos
         run: |
-          if ! salida=$(kubectl apply -k infra/k8s --dry-run=client 2>&1); then
+          # `kubectl apply --dry-run=client` sigue pidiendole el esquema
+          # OpenAPI a un cluster, y aqui no hay ninguno: fallaba con
+          # "connection refused" a localhost:8080. Se compone con kustomize
+          # y se valida la sintaxis sin contactar con nadie.
+          # Separado en dos para saber cual de los dos fallo: componer los
+          # manifiestos o decodificarlos.
+          if ! compuesto=$(kubectl kustomize infra/k8s 2>&1); then
+            echo "$compuesto"
+            echo "::error::kustomize no pudo componer infra/k8s: $(echo "$compuesto" | tail -5 | tr -s '[:space:]' ' ' | cut -c1-700)"
+            exit 1
+          fi
+
+          if ! salida=$(printf '%s' "$compuesto" | kubectl apply -f - --dry-run=client --validate=false 2>&1); then
             echo "$salida"
-            echo "::error::kustomize fallo: $(echo "$salida" | tail -5 | tr -s '[:space:]' ' ')"
+            echo "::error::los manifiestos no son validos: $(echo "$salida" | tail -5 | tr -s '[:space:]' ' ' | cut -c1-700)"
             exit 1
           fi
           echo "$salida"
