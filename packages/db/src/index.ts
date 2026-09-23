@@ -1,5 +1,6 @@
 import { Money, type ShippingPolicy } from "@nexa/core"
 import { PrismaClient } from "../generated/client/index.js"
+import { resolveDatabaseUrl } from "./database-url"
 import { PrismaCartRepository } from "./repositories/cart-repository"
 import { PrismaInventoryService } from "./repositories/inventory-service"
 import { PrismaOrderRepository } from "./repositories/order-repository"
@@ -13,21 +14,7 @@ import { StaticProductRepository } from "./repositories/static-product-repositor
 // de PostgreSQL — y en Neon, el pool es pequeño.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
-/** Neon a veces entrega `channel_binding=require`; Prisma en Vercel falla con eso. */
-function databaseUrl(): string | undefined {
-  const raw = process.env.DATABASE_URL
-  if (!raw) return undefined
-  try {
-    const parsed = new URL(raw)
-    parsed.searchParams.delete("channel_binding")
-    if (!parsed.searchParams.has("sslmode")) parsed.searchParams.set("sslmode", "require")
-    return parsed.toString()
-  } catch {
-    return raw
-  }
-}
-
-const databaseUrlResolved = databaseUrl()
+const databaseUrlResolved = resolveDatabaseUrl(process.env.DATABASE_URL)
 
 export const prisma: PrismaClient =
   globalForPrisma.prisma ??
