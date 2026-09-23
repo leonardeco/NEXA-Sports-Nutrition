@@ -19,10 +19,10 @@
 > - **El catálogo tiene 128 productos**, no los 127 que se migraron: el 14 de septiembre se
 >   añadió a mano Creatine Monohydrate 3000. El script de carga nunca tuvo el número
 >   grabado, cuenta contra el propio archivo de origen.
-> - **La base corre PostgreSQL 18.6**, no la 17 que fija el principio 1 de la constitución.
->   Es una desviación abierta: queda decidir si se enmienda la constitución a "17 o
->   superior" o se baja la base. Las secciones 6.1 y 9 siguen diciendo 17 porque eso es lo
->   que decidió ADR-0002.
+> - **La base corre PostgreSQL 18.6.** Las secciones 6.1 y 9 siguen diciendo 17 porque eso
+>   es lo que decidió ADR-0002 en su momento. El mínimo pasó a "17 o superior" el 22 de
+>   septiembre (ADR-0011), y CI, el `docker-compose` y los manifiestos se alinearon con la
+>   versión mayor de producción.
 > - **Las siete fases están construidas y desplegadas** en Vercel. F3 (pagos) y F4
 >   (asistente) están escritas pero sin estrenar: faltan las credenciales de Wompi y la de
 >   Anthropic. El [README](../../README.md) lleva el estado al día.

@@ -4,8 +4,8 @@ Reglas permanentes del proyecto. Toda spec, plan, ADR y PR debe cumplirlas.
 Si una decisión falta aquí, se detiene el trabajo y se pregunta; no se inventa.
 
 1. **Stack cerrado.** TypeScript estricto en todo el código. Next.js 15 (App Router) como
-   front y BFF, Prisma sobre PostgreSQL 17, pnpm workspaces. Añadir un lenguaje, un
-   framework o un servicio gestionado nuevo exige un ADR aprobado.
+   front y BFF, Prisma sobre PostgreSQL 17 o superior, pnpm workspaces. Añadir un
+   lenguaje, un framework o un servicio gestionado nuevo exige un ADR aprobado.
 
 2. **El dominio no conoce el framework.** `packages/core` no importa `next/*`,
    `@prisma/client` ni ningún SDK externo. Se comunica por puertos (interfaces); los

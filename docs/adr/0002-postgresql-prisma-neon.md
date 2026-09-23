@@ -1,7 +1,10 @@
 # ADR-0002 — PostgreSQL + Prisma + Neon con branching por PR
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada, enmendada el 2026-09-22
 - **Fecha:** 2026-09-02
+- **Enmienda:** la versión mínima pasó a "17 o superior" en
+  [ADR-0011](0011-postgresql-17-o-superior.md). Todo lo demás de este documento sigue
+  vigente.
 
 ## Contexto
 

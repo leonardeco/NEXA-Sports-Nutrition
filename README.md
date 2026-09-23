@@ -171,7 +171,7 @@ kubectl apply -k infra/k8s
 
 - [Constitución](docs/constitution.md) — reglas permanentes
 - [ADS](docs/ads/ADS-NEXA-v1.md) — análisis y diseño del sistema
-- [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0010
+- [Decisiones de arquitectura](docs/adr/) — ADR-0001 a ADR-0011
 - [Runbook de Kubernetes](docs/runbook-kubernetes.md) — cómo levantar el stack portable
 - [Runbook de Wompi sandbox](docs/runbook-wompi-sandbox.md) — cerrar F3 con un cobro de prueba
 - [Runbook de Vercel](docs/runbook-vercel.md) — import del monorepo y variables
@@ -195,11 +195,11 @@ Producción: <https://nexa-sports-nutrition-web.vercel.app>. `GET /api/health` r
 `{"ok":true,"db":true}` cuando la aplicación alcanza la base; `/api/alive` dice qué commit
 está sirviendo.
 
-**Desviación conocida:** el proyecto de Neon corre PostgreSQL 18.6 y el principio 1 de la
-constitución exige 17. La migración desde 16 ya se hizo —Neon no actualiza la versión mayor
-en sitio, así que implicó proyecto nuevo y resembrar—, pero aterrizó una versión por encima
-de la escrita. Funciona; queda decidir si se enmienda la constitución a "17 o superior" en
-lugar de bajar la base.
+**Versión de PostgreSQL:** producción corre 18.6 en Neon, y CI, el `docker-compose` y los
+manifiestos de Kubernetes usan la misma versión mayor a propósito: los tests de integración
+tienen que validar contra lo que de verdad atiende a los clientes. El mínimo es 17
+([ADR-0011](docs/adr/0011-postgresql-17-o-superior.md), que enmienda a ADR-0002). Subir la
+versión mayor no exige un ADR nuevo, pero sí alinear los cuatro entornos en el mismo cambio.
 
 ## Licencia
 
