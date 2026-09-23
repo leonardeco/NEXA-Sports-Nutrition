@@ -19,7 +19,7 @@ jobs:
     name: Lint · Typecheck · Tests · Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Sin `version`: la manda `packageManager` de package.json. Declarar
       # las dos hace que la accion falle con ERR_PNPM_BAD_PM_VERSION.
@@ -76,7 +76,7 @@ jobs:
       CRON_SECRET: ci-cron-secret
       PLAYWRIGHT_SKIP_WEBSERVER: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Sin `version`: la manda `packageManager` de package.json. Declarar
       # las dos hace que la accion falle con ERR_PNPM_BAD_PM_VERSION.
@@ -152,7 +152,7 @@ jobs:
     name: Imagen Docker · manifiestos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ADR-0006: no se opera el cluster, pero la imagen y los manifiestos
       # se validan en cada PR para que la portabilidad no envejezca sin uso.
