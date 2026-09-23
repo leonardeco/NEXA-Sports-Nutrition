@@ -190,9 +190,19 @@ jobs:
             exit 1
           fi
 
-          if ! salida=$(printf '%s' "$compuesto" | kubectl apply -f - --dry-run=client --validate=false 2>&1); then
-            echo "$salida"
-            echo "::error::los manifiestos no son validos: $(echo "$salida" | tail -5 | tr -s '[:space:]' ' ' | cut -c1-700)"
+          # `kubectl apply --dry-run=client` no sirve aqui ni con
+          # --validate=false: sigue necesitando la discovery del cluster para
+          # resolver los tipos. Se comprueba lo que si se puede sin cluster:
+          # que kustomize compone y que estan todos los objetos que promete
+          # el runbook. La validacion contra el esquema de Kubernetes pediria
+          # kubeconform, que es una dependencia mas y una decision aparte.
+          faltan=""
+          for tipo in Namespace ConfigMap Secret StatefulSet Deployment Service Ingress Job CronJob HorizontalPodAutoscaler; do
+            printf '%s' "$compuesto" | grep -q "^kind: $tipo$" || faltan="$faltan $tipo"
+          done
+          if [ -n "$faltan" ]; then
+            printf '%s' "$compuesto"
+            echo "::error::faltan objetos en los manifiestos compuestos:$faltan"
             exit 1
           fi
-          echo "$salida"
+          echo "Objetos compuestos: $(printf '%s' "$compuesto" | grep -c '^kind:')"
