@@ -3,6 +3,7 @@ import {
   CartNotFoundError,
   CheckoutError,
   InsufficientStockError,
+  InventoryError,
   OrderNotFoundError,
 } from "@nexa/db"
 import { describe, expect, it } from "vitest"
@@ -20,6 +21,27 @@ describe("errorResponse", () => {
     const json = await body(response)
     expect(json.available).toBe(2)
     expect(String(json.error)).toContain("stock")
+  })
+
+  // El caso concreto tiene que ganar al general: InsufficientStockError
+  // hereda de InventoryError, y si se comprobara al reves el cliente nunca
+  // sabria cuantas unidades quedan.
+  it("distingue la falta de stock del resto de problemas de inventario", async () => {
+    const concreto = errorResponse(new InsufficientStockError("var-1", 5, 2))
+    expect((await body(concreto)).available).toBe(2)
+
+    const general = errorResponse(new InventoryError("La variante var-1 no existe"))
+    expect(general.status).toBe(409)
+    expect((await body(general)).available).toBeUndefined()
+  })
+
+  // Pasa cuando una variante deja de existir entre anadirla al carrito y
+  // pagar. No es un fallo del servidor, asi que 409 y no 500.
+  it("no filtra el mensaje interno de un problema de inventario", async () => {
+    const response = errorResponse(new InventoryError("La variante clx9f2a0001 no existe"))
+    const json = await body(response)
+    expect(String(json.error)).not.toContain("clx9f2a0001")
+    expect(String(json.error)).toContain("disponible")
   })
 
   it("traduce carrito y orden inexistentes a 404", () => {

@@ -3,6 +3,7 @@ import {
   CartNotFoundError,
   CheckoutError,
   InsufficientStockError,
+  InventoryError,
   OrderNotFoundError,
 } from "@nexa/db"
 import { NextResponse } from "next/server"
@@ -22,6 +23,19 @@ export function errorResponse(error: unknown): NextResponse {
       { status: 409 },
     )
   }
+  // Va despues de InsufficientStockError, que hereda de esta: el caso
+  // concreto tiene que ganar al general. Aqui caen el resto de problemas de
+  // inventario —una variante que dejo de existir entre anadirla al carrito
+  // y pagar, por ejemplo—. No es un fallo nuestro, asi que 409 y no 500,
+  // pero el mensaje interno lleva ids y no se le devuelve al cliente.
+  if (error instanceof InventoryError) {
+    console.error("[api] problema de inventario", error.message)
+    return NextResponse.json(
+      { error: "Ese producto ya no está disponible. Actualiza el carrito e inténtalo de nuevo." },
+      { status: 409 },
+    )
+  }
+
   if (error instanceof CartNotFoundError || error instanceof OrderNotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 })
   }
