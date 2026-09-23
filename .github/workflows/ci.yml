@@ -163,6 +163,44 @@ jobs:
           file: infra/docker/Dockerfile
           target: runner
           push: false
+          load: true
+          tags: nexa-web:ci
+
+      # Construirla solo demuestra que compila. Esto comprueba que arranca:
+      # que el servidor de `output: standalone` levanta, que los estaticos y
+      # public viajaron dentro, y que sin DATABASE_URL la tienda sirve la
+      # vitrina desde el JSON en vez de caerse (RNF-03).
+      - name: Arrancar la imagen y comprobar que sirve
+        run: |
+          docker run -d --name nexa-web-ci -p 3000:3000 nexa-web:ci
+          arriba=""
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/catalogo -o /tmp/catalogo.html; then arriba="si"; break; fi
+            sleep 2
+          done
+
+          if [ -z "$arriba" ]; then
+            echo "::group::Log del contenedor"
+            docker logs nexa-web-ci 2>&1 || true
+            echo "::endgroup::"
+            echo "::error::la imagen no respondio en :3000: $(docker logs nexa-web-ci 2>&1 | tail -15 | tr -s '[:space:]' ' ' | cut -c1-700)"
+            docker rm -f nexa-web-ci >/dev/null 2>&1 || true
+            exit 1
+          fi
+
+          fallos=""
+          grep -q "Catálogo" /tmp/catalogo.html || fallos="$fallos catalogo-sin-contenido"
+          curl -sf http://localhost:3000/api/alive -o /dev/null || fallos="$fallos api-alive"
+          # Un estatico cualquiera: si `public` no viajo, esto da 404.
+          curl -sf -o /dev/null http://localhost:3000/img/productos/1-nitro-tech-2-lbs.webp || fallos="$fallos falta-public"
+
+          docker rm -f nexa-web-ci >/dev/null 2>&1 || true
+
+          if [ -n "$fallos" ]; then
+            echo "::error::la imagen arranca pero algo no sirve:$fallos"
+            exit 1
+          fi
+          echo "La imagen arranca y sirve catalogo, /api/alive y estaticos"
 
       - name: Construir imagen de migraciones
         uses: docker/build-push-action@v6
