@@ -115,7 +115,17 @@ jobs:
       # catalogo tiene repositorio de respaldo estatico la tienda parece
       # funcionar hasta que alguien añade algo al carrito.
       - name: Build como en produccion
-        run: pnpm --filter @nexa/web vercel-build
+        run: |
+          # Este paso ya fallo una vez sin dejar rastro legible: la anotacion
+          # decia solo "exit code 1". `next build` descarga las fuentes de
+          # Google en cada build porque el runner no trae .next/cache, asi
+          # que un tropiezo de red basta para tumbarlo.
+          if ! salida=$(pnpm --filter @nexa/web vercel-build 2>&1); then
+            echo "$salida"
+            echo "::error::el build fallo: $(echo "$salida" | tail -25 | tr -s '[:space:]' ' ' | cut -c1-900)"
+            exit 1
+          fi
+          echo "$salida" | tail -30
 
       - name: Instalar Chromium
         run: pnpm exec playwright install --with-deps chromium
