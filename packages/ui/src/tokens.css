@@ -61,6 +61,12 @@
      blanco: blanco sobre #FF5A1F da 3.12; negro da 6.35. */
   --accent-text: #c43c08;
 
+  /* Lo mismo con el verde: #25D366 como texto sobre fondo claro da 1.98,
+     que es de los peores contrastes que se pueden conseguir. Este es el
+     mismo verde oscurecido hasta 5.42. El de marca se sigue usando como
+     FONDO del boton, con tinta encima (9.98). */
+  --whatsapp-text: #127a3c;
+
   --surface-ground: var(--color-nexa-50);
   --surface-raised: var(--color-nexa-paper);
   --surface-sunken: var(--color-nexa-100);
@@ -75,6 +81,7 @@
   :root:not([data-theme="light"]) {
     /* Sobre el fondo oscuro manda el brillante: 6.81 contra 3.70 del oscuro. */
     --accent-text: #ff6a33;
+    --whatsapp-text: #25d366;
     --surface-ground: #0a0d14;
     --surface-raised: #111722;
     --surface-sunken: #182031;
@@ -89,6 +96,7 @@
 :root[data-theme="dark"] {
   /* Sobre el fondo oscuro manda el brillante: 6.81 contra 3.70 del oscuro. */
   --accent-text: #ff6a33;
+  --whatsapp-text: #25d366;
   --surface-ground: #0a0d14;
   --surface-raised: #111722;
   --surface-sunken: #182031;

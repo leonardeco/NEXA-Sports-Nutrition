@@ -66,7 +66,7 @@ export default function Error({
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium underline"
-          style={{ color: "var(--color-nexa-whatsapp)" }}
+          style={{ color: "var(--whatsapp-text)" }}
         >
           Haz tu pedido por WhatsApp al {STORE.whatsappDisplay}
         </a>

@@ -49,7 +49,7 @@ export default function NotFound() {
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium underline"
-          style={{ color: "var(--color-nexa-whatsapp)" }}
+          style={{ color: "var(--whatsapp-text)" }}
         >
           Escríbenos al {STORE.whatsappDisplay}
         </a>

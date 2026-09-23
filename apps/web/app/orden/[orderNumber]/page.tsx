@@ -134,7 +134,7 @@ export default async function OrdenPage({ params }: { params: Params }) {
         href={whatsappLink(mensaje)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
+        className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase"
         style={{ background: "var(--color-nexa-whatsapp)" }}
       >
         {pendiente && hayPasarela

@@ -30,7 +30,7 @@ export default function ContactoPage() {
             Respuesta más rápida
           </span>
           <span className="mt-1 block text-xl font-semibold">WhatsApp</span>
-          <span className="mt-1 block text-sm" style={{ color: "var(--color-nexa-whatsapp)" }}>
+          <span className="mt-1 block text-sm" style={{ color: "var(--whatsapp-text)" }}>
             {STORE.whatsappDisplay}
           </span>
         </a>

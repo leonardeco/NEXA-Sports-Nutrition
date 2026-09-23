@@ -138,12 +138,18 @@ export default async function ProductoPage({ params }: { params: Params }) {
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">
+            {/* El texto sigue al fondo: sobre el verde manda la tinta (9.98,
+                el blanco daría 1.98); sobre el gris de agotado manda el
+                blanco (4.83, la tinta daría 4.10). */}
             <a
               href={whatsappLink(mensaje)}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
-              style={{ background: agotado ? "var(--text-muted)" : "var(--color-nexa-whatsapp)" }}
+              className="px-6 py-3 text-sm font-semibold tracking-wide uppercase"
+              style={{
+                background: agotado ? "var(--text-muted)" : "var(--color-nexa-whatsapp)",
+                color: agotado ? "var(--color-nexa-paper)" : "var(--color-nexa-ink)",
+              }}
             >
               {agotado ? "Consultar disponibilidad" : "Pedir por WhatsApp"}
             </a>
