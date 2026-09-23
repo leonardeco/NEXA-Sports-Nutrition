@@ -114,7 +114,7 @@ export default async function ProductoPage({ params }: { params: Params }) {
 
           <p
             className="mt-4 text-3xl font-bold tabular-nums"
-            style={{ color: "var(--color-nexa-orange)" }}
+            style={{ color: "var(--accent-text)" }}
           >
             {Money.format(product.priceCents)}
           </p>

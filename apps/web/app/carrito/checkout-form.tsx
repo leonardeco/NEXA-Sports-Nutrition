@@ -101,7 +101,7 @@ export function CheckoutForm({ blocked }: { blocked: boolean }) {
       <button
         type="submit"
         disabled={sending || blocked}
-        className="mt-6 w-full px-6 py-4 text-sm font-semibold tracking-wide text-white uppercase transition-opacity disabled:opacity-50"
+        className="mt-6 w-full px-6 py-4 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase transition-opacity disabled:opacity-50"
         style={{ background: "var(--color-nexa-orange)" }}
       >
         {sending ? "Creando el pedido…" : "Confirmar pedido"}

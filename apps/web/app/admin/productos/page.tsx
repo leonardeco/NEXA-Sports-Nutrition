@@ -61,7 +61,7 @@ export default async function AdminProductosPage({ searchParams }: { searchParam
                     {product.isFeatured && (
                       <span
                         className="ml-2 align-middle text-[0.62rem] font-semibold tracking-wide uppercase"
-                        style={{ color: "var(--color-nexa-orange)" }}
+                        style={{ color: "var(--accent-text)" }}
                       >
                         Destacado
                       </span>

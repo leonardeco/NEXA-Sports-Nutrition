@@ -27,7 +27,7 @@ export default async function CarritoPage() {
         </p>
         <Link
           href="/catalogo"
-          className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
+          className="mt-6 inline-block px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase"
           style={{ background: "var(--color-nexa-orange)" }}
         >
           Ver el catálogo
@@ -66,7 +66,7 @@ export default async function CarritoPage() {
               <span className="font-semibold">Total</span>
               <span
                 className="text-2xl font-bold tabular-nums"
-                style={{ color: "var(--color-nexa-orange)" }}
+                style={{ color: "var(--accent-text)" }}
               >
                 {Money.format(cart.totalCents)}
               </span>

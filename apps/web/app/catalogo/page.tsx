@@ -106,7 +106,7 @@ export default async function CatalogoPage({
         />
         <button
           type="submit"
-          className="px-5 py-2.5 text-sm font-semibold tracking-wide text-white uppercase"
+          className="px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase"
           style={{ background: "var(--color-nexa-orange)" }}
         >
           Buscar
@@ -115,7 +115,7 @@ export default async function CatalogoPage({
           href="/catalogo-nexa.pdf"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-nexa-orange)] uppercase border border-[var(--color-nexa-orange)] transition-colors hover:bg-[var(--color-nexa-orange)] hover:text-white"
+          className="px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--accent-text)] uppercase border border-[var(--accent-text)] transition-colors hover:bg-[var(--color-nexa-orange)] hover:text-[var(--color-nexa-ink)]"
         >
           Descargar PDF
         </a>
@@ -181,11 +181,11 @@ export default async function CatalogoPage({
                 style={{
                   borderColor:
                     (sortSlug ?? "relevancia") === o.slug
-                      ? "var(--color-nexa-orange)"
+                      ? "var(--accent-text)"
                       : "var(--border-subtle)",
                   color:
                     (sortSlug ?? "relevancia") === o.slug
-                      ? "var(--color-nexa-orange)"
+                      ? "var(--accent-text)"
                       : "var(--text-secondary)",
                 }}
               >
@@ -216,7 +216,7 @@ export default async function CatalogoPage({
                   <Link
                     href="/catalogo"
                     className="mt-4 inline-block text-sm font-semibold"
-                    style={{ color: "var(--color-nexa-orange)" }}
+                    style={{ color: "var(--accent-text)" }}
                   >
                     Ver todo el catálogo
                   </Link>
@@ -295,8 +295,8 @@ function FilterLink({
       aria-current={active ? "page" : undefined}
       className="border-l-2 py-1.5 pl-2.5 text-sm transition-colors"
       style={{
-        borderColor: active ? "var(--color-nexa-orange)" : "transparent",
-        color: active ? "var(--color-nexa-orange)" : "var(--text-secondary)",
+        borderColor: active ? "var(--accent-text)" : "transparent",
+        color: active ? "var(--accent-text)" : "var(--text-secondary)",
         fontWeight: active ? 600 : 400,
       }}
     >

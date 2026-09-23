@@ -40,7 +40,7 @@ export function PromoBanner() {
         <div className="flex flex-col justify-center p-7 md:p-10">
           <p
             className="font-mono text-[0.7rem] tracking-[0.22em] uppercase"
-            style={{ color: "var(--color-nexa-orange)" }}
+            style={{ color: "var(--accent-text)" }}
           >
             {PROMO.eyebrow}
           </p>
@@ -57,7 +57,7 @@ export function PromoBanner() {
               href={whatsappLink(PROMO.whatsappMessage)}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
+              className="px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase"
               style={{ background: "var(--color-nexa-orange)" }}
             >
               {PROMO.cta}

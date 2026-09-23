@@ -38,7 +38,7 @@ export function WompiButton({
 
       <button
         type="submit"
-        className="w-full px-6 py-4 text-sm font-semibold tracking-wide text-white uppercase sm:w-auto"
+        className="w-full px-6 py-4 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase sm:w-auto"
         style={{ background: "var(--color-nexa-orange)" }}
       >
         Pagar {Money.format(totalCents)} con Wompi

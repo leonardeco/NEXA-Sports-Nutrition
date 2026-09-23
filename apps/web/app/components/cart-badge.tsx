@@ -24,7 +24,7 @@ export async function CartBadge() {
       Carrito
       {count > 0 && (
         <span
-          className="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full text-[0.65rem] font-bold text-white tabular-nums"
+          className="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full text-[0.65rem] font-bold text-[var(--color-nexa-ink)] tabular-nums"
           style={{ background: "var(--color-nexa-orange)" }}
         >
           {count > 99 ? "99+" : count}

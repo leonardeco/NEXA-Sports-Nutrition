@@ -145,7 +145,7 @@ export function SalesAdvisor() {
                     href={line.whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs font-medium text-[var(--color-nexa-orange)]"
+                    className="mt-1 inline-block text-xs font-medium text-[var(--accent-text)]"
                   >
                     Escribir por WhatsApp
                   </a>
@@ -180,7 +180,7 @@ export function SalesAdvisor() {
             <button
               type="submit"
               disabled={pending || input.trim().length === 0}
-              className="rounded-lg bg-[var(--color-nexa-orange)] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded-lg bg-[var(--color-nexa-orange)] px-3 py-2 text-sm font-semibold text-[var(--color-nexa-ink)] disabled:opacity-50"
             >
               Enviar
             </button>

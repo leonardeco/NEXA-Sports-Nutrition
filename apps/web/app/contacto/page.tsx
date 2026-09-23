@@ -37,7 +37,7 @@ export default function ContactoPage() {
 
         <a
           href={`mailto:${STORE.email}`}
-          className="border p-6 transition-colors hover:border-[var(--color-nexa-orange)]"
+          className="border p-6 transition-colors hover:border-[var(--accent-text)]"
           style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)" }}
         >
           <span
@@ -54,7 +54,7 @@ export default function ContactoPage() {
       </div>
 
       <p className="mt-8 text-sm">
-        <a href="/catalogo-nexa.pdf" className="font-medium underline" style={{ color: "var(--color-nexa-orange)" }}>
+        <a href="/catalogo-nexa.pdf" className="font-medium underline" style={{ color: "var(--accent-text)" }}>
           Descargar catálogo NEXA (PDF)
         </a>
         . Precios vigentes, marca NEXA.

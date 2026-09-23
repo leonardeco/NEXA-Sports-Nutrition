@@ -28,7 +28,7 @@ export default function Error({
     <main className="mx-auto max-w-2xl px-5 py-24 text-center">
       <p
         className="font-mono text-[0.7rem] tracking-[0.22em] uppercase"
-        style={{ color: "var(--color-nexa-orange)" }}
+        style={{ color: "var(--accent-text)" }}
       >
         Algo falló
       </p>
@@ -45,7 +45,7 @@ export default function Error({
         <button
           type="button"
           onClick={reset}
-          className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase"
+          className="px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase"
           style={{ background: "var(--color-nexa-orange)" }}
         >
           Reintentar

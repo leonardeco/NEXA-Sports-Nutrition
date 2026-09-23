@@ -158,8 +158,8 @@ function Filtro({
       href={href}
       className="border px-3 py-1.5"
       style={{
-        borderColor: activo ? "var(--color-nexa-orange)" : "var(--border-subtle)",
-        color: activo ? "var(--color-nexa-orange)" : "var(--text-secondary)",
+        borderColor: activo ? "var(--accent-text)" : "var(--border-subtle)",
+        color: activo ? "var(--accent-text)" : "var(--text-secondary)",
       }}
     >
       {children}

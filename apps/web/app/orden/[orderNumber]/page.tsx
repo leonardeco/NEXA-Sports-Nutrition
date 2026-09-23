@@ -107,7 +107,7 @@ export default async function OrdenPage({ params }: { params: Params }) {
           <span className="font-semibold">Total</span>
           <span
             className="text-2xl font-bold tabular-nums"
-            style={{ color: "var(--color-nexa-orange)" }}
+            style={{ color: "var(--accent-text)" }}
           >
             {Money.format(order.totalCents)}
           </span>

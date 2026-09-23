@@ -48,17 +48,20 @@ export default async function Home() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/catalogo"
-              className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase transition-colors"
+              className="px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase transition-colors"
               style={{ background: "var(--color-nexa-orange)" }}
             >
               Ver catálogo
             </Link>
+            {/* El color va en clase y no en `style`: en línea gana siempre, y
+                al pasar el ratón el fondo se llenaba de naranja con el texto
+                también naranja, o sea invisible. */}
             <a
               href="/catalogo-nexa.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="border border-[var(--color-nexa-orange)] px-6 py-3 text-sm font-semibold tracking-wide uppercase transition-colors hover:bg-[var(--color-nexa-orange)]"
-              style={{ color: "var(--color-nexa-orange)", textShadow: "0 0 10px rgba(255, 90, 31, 0.3)" }}
+              className="border border-[var(--color-nexa-orange)] px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-orange)] uppercase transition-colors hover:bg-[var(--color-nexa-orange)] hover:text-[var(--color-nexa-ink)]"
+              style={{ textShadow: "0 0 10px rgba(255, 90, 31, 0.3)" }}
             >
               Descargar PDF
             </a>
@@ -90,7 +93,7 @@ export default async function Home() {
             >
               <span className="text-lg font-semibold normal-case">{c.name}</span>
               <span
-                className="mt-1 block text-sm transition-colors group-hover:text-[var(--color-nexa-orange)]"
+                className="mt-1 block text-sm transition-colors group-hover:text-[var(--accent-text)]"
                 style={{ color: "var(--text-muted)" }}
               >
                 Ver productos
@@ -108,7 +111,7 @@ export default async function Home() {
             <Link
               href="/catalogo"
               className="text-sm font-medium"
-              style={{ color: "var(--color-nexa-orange)" }}
+              style={{ color: "var(--accent-text)" }}
             >
               Ver todo
             </Link>
@@ -129,7 +132,7 @@ export default async function Home() {
             <Link
               key={m.slug}
               href={`/catalogo?marca=${m.slug}`}
-              className="border px-3.5 py-2 text-sm transition-colors hover:border-[var(--color-nexa-orange)]"
+              className="border px-3.5 py-2 text-sm transition-colors hover:border-[var(--accent-text)]"
               style={{ borderColor: "var(--border-subtle)", background: "var(--surface-raised)" }}
             >
               {m.name}

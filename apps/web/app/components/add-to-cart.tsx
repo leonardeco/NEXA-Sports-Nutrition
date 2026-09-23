@@ -99,7 +99,7 @@ export function AddToCart({
           type="button"
           onClick={add}
           disabled={pending}
-          className="px-6 py-3 text-sm font-semibold tracking-wide text-white uppercase transition-opacity disabled:opacity-60"
+          className="px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-nexa-ink)] uppercase transition-opacity disabled:opacity-60"
           style={{ background: "var(--color-nexa-orange)" }}
         >
           {pending ? "Añadiendo…" : "Añadir al carrito"}

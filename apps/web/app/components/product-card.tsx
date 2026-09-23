@@ -27,7 +27,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
 
         {product.badge && !agotado && (
           <span
-            className="absolute top-2 left-2 px-2 py-1 text-[0.62rem] font-semibold tracking-wide uppercase text-white"
+            className="absolute top-2 left-2 px-2 py-1 text-[0.62rem] font-semibold tracking-wide uppercase text-[var(--color-nexa-ink)]"
             style={{ background: "var(--color-nexa-orange)" }}
           >
             {product.badge}
@@ -58,7 +58,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         <div className="mt-3 flex items-baseline justify-between gap-2">
           <span
             className="text-lg font-bold tabular-nums"
-            style={{ color: agotado ? "var(--text-muted)" : "var(--color-nexa-orange)" }}
+            style={{ color: agotado ? "var(--text-muted)" : "var(--accent-text)" }}
           >
             {Money.format(product.priceCents)}
           </span>
